@@ -4,10 +4,11 @@ on:
   push:
     branches: [main]
     tags: ['v0.1.*']
+  pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: release
+  group: ${{ github.event_name == 'pull_request' && format('package-{0}', github.ref) || 'release' }}
   cancel-in-progress: false
 
 permissions:
@@ -21,7 +22,7 @@ jobs:
       should_release: ${{ steps.plan.outputs.should_release }}
       mode: ${{ steps.plan.outputs.mode }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Plan release
         id: plan
         env:
@@ -39,6 +40,11 @@ jobs:
             echo "should_release=false" >> "$GITHUB_OUTPUT"
             echo "Version $VERSION is not a 0.1.x release; nothing to do."
             exit 1
+          fi
+          if [ "$EVENT" = 'pull_request' ]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "Pull requests build archives without publishing a release."
+            exit 0
           fi
           if [ "$EVENT" = 'push' ] && [ "$REF_TYPE" = 'tag' ]; then
             if [ "$REF_NAME" != "$TAG" ]; then
@@ -77,7 +83,7 @@ jobs:
   build:
     name: package (${{ matrix.platform }}/${{ matrix.arch }})
     needs: preflight
-    if: needs.preflight.outputs.should_release == 'true'
+    if: github.event_name == 'pull_request' || needs.preflight.outputs.should_release == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -85,39 +91,66 @@ jobs:
           - os: macos-15
             platform: darwin
             arch: arm64
+            petkit: petkit
           - os: windows-latest
             platform: win32
             arch: x64
+            petkit: petkit.exe
     runs-on: ${{ matrix.os }}
     env:
       RELEASE_TAG: ${{ needs.preflight.outputs.release_tag }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+      - name: Install Pillow
+        run: python -m pip install Pillow==13.0.0
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.1
       - run: npm ci --ignore-scripts
+      - name: Prepare animation catalog
+        run: node scripts/prepare.mjs
       - name: Download animation assets (macOS)
         if: matrix.platform == 'darwin'
         run: python3 scripts/download_assets.py
       - name: Download animation assets (Windows)
         if: matrix.platform == 'win32'
         run: python scripts/download_assets.py
-      - run: npm run build
-      - run: npm test
-      - run: npm run check
+      - name: Typecheck TypeScript
+        run: npm exec --no -- tsc --noEmit
+      - name: Generate icons from the brand PNG masters
+        run: node scripts/make-icons.mjs
+      - name: Build Zig native sidecar (native CPU baseline)
+        working-directory: native
+        run: zig build -Doptimize=ReleaseSafe -Dcpu=baseline
+      - name: Build TypeScript into dist/
+        run: node scripts/build.mjs
+      - name: Run Zig tests
+        working-directory: native
+        run: zig build test
+      - name: Run TypeScript and Node tests
+        run: npm test
+      - name: Check downloaded animation assets
+        run: node scripts/check.mjs
+      - name: Verify petkit landed in dist/native
+        shell: bash
+        run: test -f "dist/native/${{ matrix.petkit }}"
       - run: node scripts/package.mjs --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
       - name: Verify and archive macOS app
         if: matrix.platform == 'darwin'
         run: |
           test "$RELEASE_TAG" = "v$(node -p 'require("./package.json").version')"
-          codesign --verify --deep --strict "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app"
-          test -f "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app/Contents/Resources/app/assets/tray-icon.png"
-          ditto -c -k -X --keepParent --zlibCompressionLevel 9 "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
+          APP="dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app"
+          codesign --verify --deep --strict "$APP"
+          test -f "$APP/Contents/Resources/app/assets/tray-icon.png"
+          test -x "$APP/Contents/Resources/app/dist/native/petkit"
+          ditto -c -k -X --keepParent --zlibCompressionLevel 9 "$APP" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
           python3 - "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip" <<'PY'
           import sys
           from pathlib import Path
@@ -126,13 +159,17 @@ jobs:
               invalid = archive.testzip()
               if invalid:
                   raise RuntimeError(f"Corrupt archive entry: {invalid!a}")
-              icons = [name for name in archive.namelist()
+              names = archive.namelist()
+              icons = [name for name in names
                        if name.endswith(".app/Contents/Resources/app/assets/tray-icon.png")]
               if len(icons) != 1:
                   raise RuntimeError(f"Expected one tray icon, found {icons!a}")
               if archive.read(icons[0]) != Path("assets/tray-icon.png").read_bytes():
                   raise RuntimeError("Archived tray icon differs from the source.")
-              print(f"macOS archive verified: {len(archive.namelist())} entries.")
+              for entry in ("dist/main.cjs", "dist/native/petkit"):
+                  if not any(name.endswith(f".app/Contents/Resources/app/{entry}") for name in names):
+                      raise RuntimeError(f"Missing macOS runtime entry: {entry}")
+              print(f"macOS archive verified: {len(names)} entries.")
           PY
       - name: Verify Windows archive
         if: matrix.platform == 'win32'
@@ -149,11 +186,13 @@ jobs:
                   "install.ps1",
                   "蓝色大肥鱼-win32-x64/BlueDaFeiYu.exe",
                   "蓝色大肥鱼-win32-x64/resources/app/assets/tray-icon.png",
+                  "蓝色大肥鱼-win32-x64/resources/app/dist/main.cjs",
+                  "蓝色大肥鱼-win32-x64/resources/app/dist/native/petkit.exe",
               ):
                   if expected not in names:
                       raise RuntimeError(f"Missing archive entry: {expected}")
               print(f"Archive OK: {len(names)} entries, install script verified.")
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*.zip
@@ -163,7 +202,7 @@ jobs:
   publish:
     name: publish GitHub release
     needs: [preflight, build]
-    if: needs.preflight.outputs.should_release == 'true'
+    if: github.event_name != 'pull_request' && needs.preflight.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -174,8 +213,8 @@ jobs:
       MAC_ZIP: magpie-DaFeiYu-${{ needs.preflight.outputs.release_tag }}-macOS-arm64.zip
       WIN_ZIP: magpie-DaFeiYu-${{ needs.preflight.outputs.release_tag }}-Windows-x64.zip
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true

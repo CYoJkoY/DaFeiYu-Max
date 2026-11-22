@@ -88,23 +88,9 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 
 安装后，Magpie 侧边栏会出现「蓝色大肥鱼」使用页。**页面不会自动安装或启动桌面 App**，桌面悬浮窗仍需按上面的说明下载对应系统的 ZIP。
 
-### 从源码
+### 开发与验证
 
-需要 Node.js 24+、npm、Python 3 和 Git。npm 命令两个平台一致，只有 Python 命令不同：Windows 用 `python`，macOS/Linux 用 `python3`。
-
-```bash
-git clone https://github.com/wolfvoid/magpie-DaFeiYu.git
-cd magpie-DaFeiYu
-npm ci --ignore-scripts
-node node_modules/electron/install.js
-python3 scripts/download_assets.py   # Windows 把 python3 换成 python
-node scripts/prepare.mjs
-npm run build
-npm test
-npm start
-```
-
-动画从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。首次运行需要联网下载依赖和约 52 MB 素材。
+本地开发需要 Node.js 24+、npm 和 Git。TypeScript、图标与 Zig 编译、测试和应用打包全部由 GitHub Actions 执行；不要求本地安装编译器或生成构建产物。动画由 CI 从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。
 
 ## 一个仓库，两个平台
 
