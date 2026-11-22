@@ -398,45 +398,8 @@ if (!app.requestSingleInstanceLock()) {
     });
     social.schedule();
 
-    const area = screen.getPrimaryDisplay().workArea;
-    const position = clampPosition({
-      x: settings.x ?? area.x + area.width - settings.size - 20,
-      y: settings.y ?? area.y + area.height - windowSize().height - 12,
-    });
-    petWindow = new BrowserWindow({
-      ...windowSize(), ...position, title: '蓝色大肥鱼', frame: false, transparent: true,
-      resizable: false, hasShadow: false, alwaysOnTop: true, skipTaskbar: true, acceptFirstMouse: true,
-      show: false, backgroundColor: '#00000000',
-      webPreferences: {
-        preload: join(__dirname, 'preload.cjs'), contextIsolation: true,
-        nodeIntegration: false, sandbox: true, backgroundThrottling: true,
-      },
-    });
-    guardWindow(petWindow);
-    petWindow.setAlwaysOnTop(true, 'floating');
-    if (process.platform === 'darwin') petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
-    petWindow.setIgnoreMouseEvents(true, { forward: true });
-    void petWindow.loadFile(join(__dirname, 'pet.html'));
-    petWindow.once('ready-to-show', showPet);
-    petWindow.on('closed', () => app.quit());
-
-    tray = new Tray(process.platform === 'darwin' ? nativeImage.createEmpty() :
-      nativeImage.createFromPath(appIcon).resize({ width: 32, height: 32 }));
-    if (process.platform === 'darwin') tray.setTitle('🐋');
-    else tray.on('click', showPanel);
-    tray.setToolTip('蓝色大肥鱼 · Magpie 伴侣');
-    updateTray();
-
-    // The Zig sidecar classifies activity when present; otherwise the shared
-    // TypeScript precedence answers the same question.
-    reader = new ActivityReader();
-    reader.classifier = (requests, waiting, tools) => native?.active
-      ? native.activityState(requests, waiting, tools)
-      : tsActivityState(requests, waiting, tools);
-    native = await NativeCore.connect(__dirname);
-    if (native) console.log(`[native] Zig core ready: ${native.binary}`);
-    else console.log('[native] Zig core not found; using TypeScript fallbacks');
-
+    // IPC handlers must exist before any renderer loads: the pet and panel
+    // windows call getSnapshot() on their first tick.
     ipcMain.handle('snapshot', event => trusted(event) ? snapshot() : null);
     ipcMain.handle('quota-refresh', event => trusted(event) ? refreshQuota() : null);
     ipcMain.on('panel', event => { if (trusted(event)) showPanel(); });
@@ -525,6 +488,45 @@ if (!app.requestSingleInstanceLock()) {
       send('social', report);
       return report;
     });
+
+    const area = screen.getPrimaryDisplay().workArea;
+    const position = clampPosition({
+      x: settings.x ?? area.x + area.width - settings.size - 20,
+      y: settings.y ?? area.y + area.height - windowSize().height - 12,
+    });
+    petWindow = new BrowserWindow({
+      ...windowSize(), ...position, title: '蓝色大肥鱼', frame: false, transparent: true,
+      resizable: false, hasShadow: false, alwaysOnTop: true, skipTaskbar: true, acceptFirstMouse: true,
+      show: false, backgroundColor: '#00000000',
+      webPreferences: {
+        preload: join(__dirname, 'preload.cjs'), contextIsolation: true,
+        nodeIntegration: false, sandbox: true, backgroundThrottling: true,
+      },
+    });
+    guardWindow(petWindow);
+    petWindow.setAlwaysOnTop(true, 'floating');
+    if (process.platform === 'darwin') petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+    petWindow.setIgnoreMouseEvents(true, { forward: true });
+    void petWindow.loadFile(join(__dirname, 'pet.html'));
+    petWindow.once('ready-to-show', showPet);
+    petWindow.on('closed', () => app.quit());
+
+    tray = new Tray(process.platform === 'darwin' ? nativeImage.createEmpty() :
+      nativeImage.createFromPath(appIcon).resize({ width: 32, height: 32 }));
+    if (process.platform === 'darwin') tray.setTitle('🐋');
+    else tray.on('click', showPanel);
+    tray.setToolTip('蓝色大肥鱼 · Magpie 伴侣');
+    updateTray();
+
+    // The Zig sidecar classifies activity when present; otherwise the shared
+    // TypeScript precedence answers the same question.
+    reader = new ActivityReader();
+    reader.classifier = (requests, waiting, tools) => native?.active
+      ? native.activityState(requests, waiting, tools)
+      : tsActivityState(requests, waiting, tools);
+    native = await NativeCore.connect(__dirname);
+    if (native) console.log(`[native] Zig core ready: ${native.binary}`);
+    else console.log('[native] Zig core not found; using TypeScript fallbacks');
 
     let activityPending = false;
     const updateActivity = async (): Promise<void> => {
