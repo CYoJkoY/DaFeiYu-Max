@@ -44,10 +44,13 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Typecheck TypeScript
-        run: npm exec --no -- tsc --noEmit
+        run: npm run typecheck
+
+      - name: Prepare animation catalog
+        run: npm run prepare
 
       - name: Generate icons from the brand PNG masters
-        run: node scripts/make-icons.mjs
+        run: npm run icons
 
       - name: Build Zig native layer (petkit)
         working-directory: native
@@ -58,7 +61,7 @@ jobs:
         run: zig build test
 
       - name: Build TypeScript into dist/
-        run: node scripts/build.mjs
+        run: npm run build
 
       - name: Smoke-test petkit ping (Windows)
         if: runner.os == 'Windows'
