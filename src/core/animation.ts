@@ -2,6 +2,12 @@ import type { Activity, Catalog } from './types.js';
 
 export type Random = () => number;
 
+const LIGHT_ACTION_NAMES = ['悠闲哼歌', '超大伸懒腰', '女仆屈膝礼仪', '照镜子',
+  '摇扇纳凉', '用鲸鱼尾巴拍打地面', '小幅度原地360度旋转展示', '原地专心玩魔方',
+  '三球抛接', '抽陀螺', '吹气球', '踢毽子', '轻快摇摆舞', '轻快记录',
+  '原地敲击桌面互动', '鲸鱼吐泡泡特效', '下五子棋', '小提琴演奏',
+  '吹笛子', '撸猫'];
+
 /**
  * Chooses which webm clip should play next. Pure state machine: given the
  * Magpie activity and a little history it returns a clip name from the
@@ -35,11 +41,14 @@ export class AnimationDirector {
     this.recentPrograms = [];
     this.workClips = 0;
     this.programs = new Set(catalog.categories.flatMap(category => category.actions));
-    this.lightActions = ['悠闲哼歌', '超大伸懒腰', '女仆屈膝礼仪', '照镜子',
-      '摇扇纳凉', '用鲸鱼尾巴拍打地面', '小幅度原地360度旋转展示', '原地专心玩魔方',
-      '三球抛接', '抽陀螺', '吹气球', '踢毽子', '轻快摇摆舞', '轻快记录',
-      '原地敲击桌面互动', '鲸鱼吐泡泡特效', '下五子棋', '小提琴演奏',
-      '吹笛子', '撸猫'].filter(name => catalog.names.includes(name));
+    this.lightActions = LIGHT_ACTION_NAMES.filter(name => catalog.names.includes(name));
+  }
+
+  /** Swap in a re-merged catalog (e.g. after an appearance plug-in changes). */
+  setCatalog(catalog: Catalog): void {
+    this.catalog = catalog;
+    this.programs = new Set(catalog.categories.flatMap(category => category.actions));
+    this.lightActions = LIGHT_ACTION_NAMES.filter(name => catalog.names.includes(name));
   }
 
   select(name: string | null, manual = false, program = false): string | null {

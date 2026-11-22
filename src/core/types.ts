@@ -157,6 +157,63 @@ export interface SocialSettings {
   platforms: Record<string, PlatformSettings>;
 }
 
+/**
+ * Declarative plugin selections. Plugins are data, never code: `appearance`
+ * selects an appearance manifest by id (null keeps the built-in default) and
+ * `enabled` toggles individual plug-ins on or off (currently seasonal skins).
+ */
+export interface PluginSettings {
+  appearance: string | null;
+  enabled: Record<string, boolean>;
+}
+
+export type PluginKindName = 'social' | 'appearance' | 'festival';
+
+/** One plug-in as surfaced to the renderer's plugin list. */
+export interface PluginViewEntry {
+  id: string;
+  kind: PluginKindName;
+  label: string;
+  description: string;
+  source: 'builtin' | 'external';
+  /** Currently applied: the selected appearance, an in-window skin, or a live social source. */
+  active: boolean;
+  /** Toggle state for seasonal plug-ins; social sources use their own switches. */
+  enabled?: boolean;
+  requiresTrust: boolean;
+  /** Social plug-ins only: the compiled adapter and its capabilities. */
+  platform?: string;
+  reads?: boolean;
+  writes?: boolean;
+}
+
+export interface FestivalView {
+  id: string;
+  label: string;
+  greeting?: string;
+  accent?: string;
+  accessories: string[];
+}
+
+export interface PluginSnapshot {
+  appearance: string | null;
+  festival: FestivalView | null;
+  entries: PluginViewEntry[];
+  issues: string[];
+}
+
+/** Dynamic palette derived from the active appearance/festival plug-ins. */
+export interface Theme {
+  accent?: string;
+}
+
+/** One catalog refresh caused by an appearance or seasonal plug-in change. */
+export interface CatalogUpdate {
+  catalog: Catalog;
+  theme: Theme;
+  plugins: PluginSnapshot;
+}
+
 export interface PetSettings {
   size: 360 | 460 | 560;
   active: boolean;
@@ -170,6 +227,7 @@ export interface PetSettings {
   y: number | null;
   interests: string[];
   social: SocialSettings;
+  plugins: PluginSettings;
 }
 
 export interface Snapshot {
@@ -178,4 +236,6 @@ export interface Snapshot {
   activity: Activity;
   quota: Quota;
   social: SocialReport;
+  plugins: PluginSnapshot;
+  theme: Theme;
 }

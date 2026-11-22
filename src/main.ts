@@ -9,11 +9,15 @@ import { mergeCachedQuota } from './core/magpie-cache.js';
 import { magpieAppCandidates } from './core/platform.js';
 import { ActivityReader, readQuota } from './core/magpie.js';
 import { PET_SIZES, normalizeSettings, sanitizeHiddenQuotas, sanitizeInterests, type PetSize } from './core/settings.js';
-import { NativeCore } from './core/native.js';
+import { NativeCore, tsActivityState } from './core/native.js';
 import { PLATFORM_IDS } from './social/registry.js';
 import { CredentialVault } from './social/vault.js';
 import { SocialEngine } from './social/engine.js';
-import type { Activity, Catalog, PetSettings, Point, Quota, SocialReport } from './core/types.js';
+import { PluginRegistry } from './plugins/registry.js';
+import { resolvePlugins } from './plugins/host.js';
+import type {
+  Activity, Catalog, PetSettings, PluginSnapshot, Point, Quota, SocialReport, Theme,
+} from './core/types.js';
 
 const smoke = process.argv.includes('--smoke-test');
 app.setName('蓝色大肥鱼');
@@ -23,7 +27,8 @@ if (process.platform === 'win32') app.setAppUserModelId('local.blue-dafeiyu.code
 
 const appIcon = join(__dirname, '../assets/tray-icon.png');
 const qaDirectory = process.env.DAFEIYU_QA_DIR || join(app.getPath('userData'), 'qa');
-const catalog = JSON.parse(readFileSync(join(__dirname, '../assets/catalog.json'), 'utf8')) as Catalog;
+const baseCatalog = JSON.parse(readFileSync(join(__dirname, '../assets/catalog.json'), 'utf8')) as Catalog;
+let catalog: Catalog = baseCatalog;
 
 let settings: PetSettings = normalizeSettings(null, PLATFORM_IDS);
 let petWindow: BrowserWindow | null = null;
@@ -33,6 +38,9 @@ let reader: ActivityReader | null = null;
 let native: NativeCore | null = null;
 let vault: CredentialVault | null = null;
 let social: SocialEngine | null = null;
+let registry: PluginRegistry | null = null;
+let theme: Theme = {};
+let pluginView: PluginSnapshot = { appearance: null, festival: null, entries: [], issues: [] };
 
 let quota: Quota = { ok: false, windows: [], error: '正在连接 Magpie…', observedAt: null };
 let cachedQuota: Quota | null = null;
@@ -61,7 +69,32 @@ const emptySocial = (): SocialReport => ({
   summary: '社交模块尚未初始化。', bullet: '社交：未启用', highlights: [], platforms: [], drafts: [],
 });
 
-const snapshot = () => ({ catalog, settings, activity, quota, social: social?.status() ?? emptySocial() });
+const snapshot = () => ({
+  catalog, settings, activity, quota,
+  social: social?.status() ?? emptySocial(),
+  plugins: pluginView,
+  theme,
+});
+
+/**
+ * Recompute the merged catalog, palette and plug-in view from persisted
+ * settings, then push the result to both renderer windows. External manifests
+ * are only ever read as data here — never executed.
+ */
+function applyPlugins(notify = false): void {
+  if (!registry) return;
+  const resolved = resolvePlugins(baseCatalog, registry, settings, Date.now());
+  catalog = resolved.catalog;
+  theme = resolved.theme;
+  pluginView = resolved.view;
+  // A stale selection (removed or rejected plug-in) was cleared while
+  // resolving; persist it so the invalid id does not come back next launch.
+  if (resolved.settingsChanged) saveSettings();
+  if (notify) {
+    send('catalog', { catalog, theme, plugins: pluginView });
+    updateTray();
+  }
+}
 
 function saveSettings(): void {
   mkdirSync(app.getPath('userData'), { recursive: true });
@@ -152,6 +185,7 @@ function play(name: string): void {
 }
 
 function changeSetting(key: string, value: unknown): void {
+  let pluginsChanged = false;
   if ((BOOLEAN_KEYS as readonly string[]).includes(key) && typeof value === 'boolean') {
     settings[key as BooleanSettingKey] = value;
   } else if (key === 'size' && PET_SIZES.includes(value as PetSize)) {
@@ -160,6 +194,21 @@ function changeSetting(key: string, value: unknown): void {
     settings.hiddenQuotas = sanitizeHiddenQuotas(value);
   } else if (key === 'interests') {
     settings.interests = sanitizeInterests(value);
+  } else if (key === 'appearance') {
+    const id = typeof value === 'string' ? value.trim() : '';
+    if (value !== null && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) return;
+    // Only accept an appearance that is actually loaded; an unknown id would
+    // otherwise persist and silently fall back on the next launch.
+    if (id && !registry?.hasAppearance(id)) return;
+    settings.plugins.appearance = id ? id : null;
+    pluginsChanged = true;
+  } else if (key === 'pluginEnabled' && value && typeof value === 'object' && !Array.isArray(value)) {
+    const { id, enabled } = value as { id?: unknown; enabled?: unknown };
+    if (typeof id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) || typeof enabled !== 'boolean') return;
+    // Toggles only apply to a loaded seasonal plug-in.
+    if (!registry?.hasFestival(id)) return;
+    settings.plugins.enabled[id] = enabled;
+    pluginsChanged = true;
   } else {
     return;
   }
@@ -170,6 +219,7 @@ function changeSetting(key: string, value: unknown): void {
     petWindow.setBounds({ ...position, ...windowSize() });
   }
   saveSettings();
+  if (pluginsChanged) applyPlugins(true);
   send('settings', settings);
   updateTray();
 }
@@ -330,6 +380,11 @@ if (!app.requestSingleInstanceLock()) {
     } catch {}
     if (!smoke) saveSettings();
 
+    registry = new PluginRegistry();
+    registry.loadDirectory(join(app.getPath('userData'), 'plugins'));
+    applyPlugins();
+    for (const issue of pluginView.issues) console.log(`[plugins] ${issue}`);
+
     vault = new CredentialVault(app.getPath('userData'));
     social = new SocialEngine({
       directory: app.getPath('userData'),
@@ -372,7 +427,12 @@ if (!app.requestSingleInstanceLock()) {
     tray.setToolTip('蓝色大肥鱼 · Magpie 伴侣');
     updateTray();
 
+    // The Zig sidecar classifies activity when present; otherwise the shared
+    // TypeScript precedence answers the same question.
     reader = new ActivityReader();
+    reader.classifier = (requests, waiting, tools) => native?.active
+      ? native.activityState(requests, waiting, tools)
+      : tsActivityState(requests, waiting, tools);
     native = await NativeCore.connect(__dirname);
     if (native) console.log(`[native] Zig core ready: ${native.binary}`);
     else console.log('[native] Zig core not found; using TypeScript fallbacks');

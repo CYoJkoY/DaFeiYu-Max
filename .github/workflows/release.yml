@@ -212,16 +212,21 @@ jobs:
               if invalid:
                   raise RuntimeError(f"Corrupt archive entry: {invalid}")
               names = set(archive.namelist())
+              if "install.ps1" in names or any(name.endswith("/install.ps1") for name in names):
+                  raise RuntimeError("Portable archive must not contain an installer.")
+              root = "蓝色大肥鱼-win32-x64/"
+              strays = [name for name in names if not name.startswith(root)]
+              if strays:
+                  raise RuntimeError(f"Archive entries outside the app folder: {strays!a}")
               for expected in (
-                  "install.ps1",
-                  "蓝色大肥鱼-win32-x64/BlueDaFeiYu.exe",
-                  "蓝色大肥鱼-win32-x64/resources/app/assets/tray-icon.png",
-                  "蓝色大肥鱼-win32-x64/resources/app/dist/main.cjs",
-                  "蓝色大肥鱼-win32-x64/resources/app/dist/native/petkit.exe",
+                  root + "BlueDaFeiYu.exe",
+                  root + "resources/app/assets/tray-icon.png",
+                  root + "resources/app/dist/main.cjs",
+                  root + "resources/app/dist/native/petkit.exe",
               ):
                   if expected not in names:
                       raise RuntimeError(f"Missing archive entry: {expected}")
-              print(f"Archive OK: {len(names)} entries, install script verified.")
+              print(f"Archive OK: {len(names)} entries, portable layout verified.")
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.platform }}-${{ matrix.arch }}
@@ -261,8 +266,10 @@ jobs:
                   invalid = archive.testzip()
                   if invalid:
                       raise RuntimeError(f"Corrupt archive entry: {invalid!a}")
-                  if path.endswith("-Windows-x64.zip") and "install.ps1" not in archive.namelist():
-                      raise RuntimeError("Windows installer is missing.")
+                  if path.endswith("-Windows-x64.zip"):
+                      names = archive.namelist()
+                      if any(name == "install.ps1" or name.endswith("/install.ps1") for name in names):
+                          raise RuntimeError("Portable Windows archive must not contain an installer.")
                   print(f"Verified {path}")
           PY
           (cd dist && sha256sum "$MAC_ZIP" "$WIN_ZIP" > SHA256SUMS.txt)

@@ -68,26 +68,33 @@ export async function readLocal(route: string, options: ReadLocalOptions = {}): 
 const unknown = (): Activity => ({ state: 'unknown', label: 'Magpie 未连接或状态暂不可读', available: false, activeCount: 0, observedAt: Date.now() });
 const count = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0;
 
-export function chooseActivity(data: any, now = Date.now()): Activity {
+export function chooseActivity(data: any, now = Date.now(), stateCode?: number): Activity {
   if (data?.object !== 'concurrency' || !['requests', 'waiting', 'tools'].every(key => count(data[key]))) return unknown();
   let state = 'idle';
   let label = 'Magpie 当前没有进行中的请求';
-  if (data.requests > data.waiting) { state = 'thinking'; label = 'Magpie 正在处理模型请求'; }
-  else if (data.waiting > 0) { state = 'waiting'; label = 'Magpie 请求排队中'; }
-  else if (data.tools > 0) { state = 'working'; label = 'Magpie 正在等待客户端工具结果'; }
+  const code = Number.isInteger(stateCode) ? stateCode as number
+    : data.requests > data.waiting ? 1 : data.waiting > 0 ? 2 : data.tools > 0 ? 3 : 0;
+  if (code === 1) { state = 'thinking'; label = 'Magpie 正在处理模型请求'; }
+  else if (code === 2) { state = 'waiting'; label = 'Magpie 请求排队中'; }
+  else if (code === 3) { state = 'working'; label = 'Magpie 正在等待客户端工具结果'; }
   return { state, label, available: true, activeCount: data.requests, waitingCount: data.waiting,
     toolCount: data.tools, observedAt: now, scope: '本机 Magpie 网关' };
 }
 
 export interface RouteAccount { id: string; provider: string; who: string }
 
+/** Async hook so the Zig sidecar can own activity classification, with a TS fallback. */
+export type ActivityStateClassifier = (requests: number, waiting: number, tools: number) => number | Promise<number>;
+
 export class ActivityReader {
   options: ReadLocalOptions;
+  classifier: ActivityStateClassifier | null;
   traceSequence: number;
   routes: Map<number, string[]>;
 
-  constructor(options: ReadLocalOptions = {}) {
+  constructor(options: ReadLocalOptions = {}, classifier: ActivityStateClassifier | null = null) {
     this.options = options;
+    this.classifier = classifier;
     this.traceSequence = 0;
     this.routes = new Map();
   }
@@ -95,7 +102,18 @@ export class ActivityReader {
   async read(): Promise<Activity> {
     try {
       const concurrency = await readLocal('/v1/magpie/concurrency', this.options);
-      const activity = chooseActivity(concurrency);
+      // Let the compiled core decide the state when it is available; a missing
+      // or failing sidecar falls back to the shared TypeScript precedence.
+      let stateCode: number | undefined;
+      if (this.classifier && concurrency?.object === 'concurrency'
+        && ['requests', 'waiting', 'tools'].every(key => count(concurrency[key]))) {
+        try {
+          stateCode = await this.classifier(concurrency.requests, concurrency.waiting, concurrency.tools);
+        } catch {
+          stateCode = undefined;
+        }
+      }
+      const activity = chooseActivity(concurrency, Date.now(), stateCode);
       const activeRoutes: number[] = (Array.isArray(concurrency.active) ? concurrency.active : [])
         .filter((request: any) => request.phase === 'upstream' && Number.isSafeInteger(request.route))
         .map((request: any) => request.route);

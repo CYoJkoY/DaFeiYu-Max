@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-const CHANNELS = ['snapshot', 'activity', 'quota', 'play', 'cursor', 'settings', 'social'] as const;
+const CHANNELS = ['snapshot', 'activity', 'quota', 'play', 'cursor', 'settings', 'social', 'catalog'] as const;
 
 contextBridge.exposeInMainWorld('pet', {
   getSnapshot: () => ipcRenderer.invoke('snapshot'),

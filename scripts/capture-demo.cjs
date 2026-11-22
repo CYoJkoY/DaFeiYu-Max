@@ -33,8 +33,8 @@ app.whenReady().then(async () => {
   let window;
   ipcMain.on('resize', (_event, height) => { if (window && Number.isFinite(height)) window.setContentSize(560, Math.round(height)); });
   window = new BrowserWindow({ width: 560, height: 470, frame: false, show: false,
-    backgroundColor: '#eff5fc', webPreferences: { preload: path.join(root, 'src/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
-  await window.loadFile(path.join(root, 'src/pet.html'));
+    backgroundColor: '#eff5fc', webPreferences: { preload: path.join(root, 'dist/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+  await window.loadFile(path.join(root, 'dist/pet.html'));
   await window.webContents.insertCSS('body { background: radial-gradient(ellipse at 50% 55%, #ffffff 0%, #eff5fc 75%); }');
   window.showInactive();
   await new Promise(resolve => setTimeout(resolve, 800));

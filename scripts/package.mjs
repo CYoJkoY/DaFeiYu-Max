@@ -113,12 +113,10 @@ async function packageTarget(metadata, staging, target) {
       postProcessDarwin(join(output, `${APP_NAME}.app`));
       artifacts.push(join(output, `${APP_NAME}.app`));
     } else {
-      // Portable Windows distribution: the app directory plus the optional per-user installer.
-      const installer = join(root, 'scripts', 'windows', 'install.ps1');
-      if (!existsSync(installer)) throw new Error(`Missing installer script: ${installer}`);
+      // Portable Windows distribution: unzip and run the application directly.
       const zip = join(root, 'dist', windowsZipName(metadata.version));
       execFileSync(process.platform === 'win32' ? 'python' : 'python3',
-        [join(root, 'scripts', 'windows', 'archive.py'), output, installer, zip], { stdio: 'inherit' });
+        [join(root, 'scripts', 'windows', 'archive.py'), output, zip], { stdio: 'inherit' });
       artifacts.push(zip);
     }
   }

@@ -1,7 +1,7 @@
-:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; color: #243955; background: #f3f7fd; }
+:root { color-scheme: light; --accent: #2f6fe0; --accent-soft: #e4efff; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; color: #243955; background: #f3f7fd; }
 * { box-sizing: border-box; }
 body { margin: 0; }
-header { padding: 30px 26px 22px; background: linear-gradient(130deg, #e4efff, #f4f8ff 70%, #eaf7fa); }
+header { padding: 30px 26px 22px; background: linear-gradient(130deg, var(--accent-soft), #f4f8ff 70%, #eaf7fa); }
 .eyebrow { font-size: 9px; letter-spacing: 1.6px; color: #6281a9; font-weight: 700; }
 h1 { font-size: 26px; margin: 10px 0 8px; letter-spacing: -1px; }
 h1 span { display: inline-block; margin-left: 5px; }
@@ -42,7 +42,7 @@ input[type='search'] { width: 100%; border: 1px solid #dde6f3; background: #f8fa
 #actions { display: flex; gap: 5px; flex-wrap: wrap; max-height: 155px; overflow-y: auto; }
 #actions button { font-size: 10px; padding: 6px 8px; background: #f3f6fb; }
 .toggle { display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin: 13px 0; }
-input[type='checkbox'] { accent-color: #6d9ce2; width: 16px; height: 16px; }
+input[type='checkbox'] { accent-color: var(--accent); width: 16px; height: 16px; }
 select { background: #f3f6fb; border: 0; border-radius: 6px; padding: 4px 8px; color: #4f7198; }
 footer { text-align: center; margin-top: 24px; font-size: 10px; }
 footer a { color: #4f78b0; text-decoration: none; }
@@ -60,3 +60,10 @@ footer a:hover { text-decoration: underline; }
 .draft-actions button { margin: 0; }
 .draft-actions .secondary { margin-top: 0; }
 textarea { width: 100%; border: 1px solid #dde6f3; background: #f8faff; border-radius: 10px; padding: 9px 11px; font-size: 12px; color: #37516f; resize: vertical; margin-top: 8px; }
+.plugin-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e6edf7; }
+.plugin-main { flex: 1; min-width: 0; }
+.plugin-main strong { color: #425d80; font-size: 12px; font-weight: 650; }
+.plugin-badges { display: inline-flex; gap: 4px; vertical-align: middle; }
+.active-badge { background: color-mix(in srgb, var(--accent) 16%, #ffffff); color: var(--accent); }
+.plugin-description { margin: 4px 0 0; }
+.plugin-issues { margin-top: 12px; }

@@ -9,6 +9,14 @@
     <section class="card"><div class="row"><h2>来点小节目</h2><span class="badge">106 段动画</span></div><div class="featured"><button data-play="放烟花">✦ 放烟花</button><button data-play="凭空生花">🪄 凭空生花</button><button data-play="蓝鲸现世">🐋 蓝鲸现世</button></div><input id="search" type="search" placeholder="找动作：魔术、吃饭、睡觉…" aria-label="搜索动作"><div id="actions"></div></section>
     <section class="card"><h2>陪伴方式</h2><label class="toggle">跟随 Magpie 请求状态<input type="checkbox" data-setting="followTasks"></label><label class="toggle">空闲时随机玩耍<input type="checkbox" data-setting="active"></label><label class="toggle">暂停动画<input type="checkbox" data-setting="paused"></label><label class="toggle">锁定桌面位置<input type="checkbox" data-setting="locked"></label><label class="toggle">角色大小<select id="size"><option value="360">小</option><option value="460">中</option><option value="560">大</option></select></label><p class="note">可拖到屏幕左右边缘，超出部分的动作会被裁切。快速甩出会弹跳；右键可点播、隐藏或退出。菜单栏 🐋 →「回到屏幕内」可随时找回。默认不开机启动。</p></section>
     <section class="card">
+      <div class="row"><h2>外观与插件</h2><span class="badge" id="plugin-state">内置</span></div>
+      <label class="toggle">外观<select id="appearance" aria-label="选择外观"></select></label>
+      <p class="note" id="festival-note">今天没有节日装扮。</p>
+      <div id="plugin-list"></div>
+      <p class="note" id="plugin-issues"></p>
+      <p class="note">外部插件是放在应用数据目录 <code>plugins/</code> 下的声明式 JSON，只扩展已内置的社交适配器、动作外观或节日装扮；应用不会执行插件代码，也不会自动发送任何内容。可写入的社交平台仍需在下方逐项启用，并在发送前逐条确认。</p>
+    </section>
+    <section class="card">
       <div class="row"><h2>它最近在关注</h2><span class="badge" id="social-state">未启用</span></div>
       <p class="note" id="social-summary">社交模块尚未初始化。</p>
       <label class="toggle">启用社交摘要<input type="checkbox" id="social-enabled"></label>

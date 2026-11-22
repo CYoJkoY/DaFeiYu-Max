@@ -19,7 +19,7 @@ const zh: Record<string, string> = {
   feature3: '106 段透明动画，可拖到屏幕边缘。',
   installTitle: '安装桌面 App',
   step1: '在浏览器中打开发布页，下载与系统匹配的压缩包：Windows 10+ x64，或 macOS 12+ 的 Apple Silicon Mac。',
-  step2: 'macOS：解压后把 App 拖入「应用程序」。Windows：解压后运行 BlueDaFeiYu.exe，或用 install.ps1 安装到当前用户。',
+  step2: 'macOS：解压后把 App 拖入「应用程序」。Windows：解压后运行 BlueDaFeiYu.exe。',
   step3: '在本机 Magpie 运行时启动 App。',
   downloadLabel: '发布页地址（选中后复制）',
   signing: 'macOS 版仅 ad-hoc 签名，未公证；Windows 版未签名。首次打开前请先核对来源。',
