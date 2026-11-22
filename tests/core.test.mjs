@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ActivityReader, chooseActivity, normalizeCards, readQuota, readLocal, resolveKey, activeAccountsForRoute } from '../src/magpie.mjs';
-import { accountPercentages, compactQuotaLabel, quotaEntries } from '../src/quota-display.mjs';
-import { clampPetPosition } from '../src/position.cjs';
-import { AnimationDirector } from '../src/animation.mjs';
-import { mergeCachedQuota } from '../src/magpie.cjs';
+import { ActivityReader, chooseActivity, normalizeCards, readQuota, readLocal, resolveKey, activeAccountsForRoute } from '../dist/core/magpie.js';
+import { accountPercentages, compactQuotaLabel, quotaEntries } from '../dist/core/quota-display.js';
+import { clampPetPosition } from '../dist/core/position.js';
+import { AnimationDirector } from '../dist/core/animation.js';
+import { mergeCachedQuota } from '../dist/core/magpie-cache.js';
 
 const now = 1800000000000;
 const catalog = JSON.parse(readFileSync(new URL('../assets/catalog.json', import.meta.url)));

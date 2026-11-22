@@ -2,9 +2,15 @@ node_modules
 dist/
 .runtime/
 qa/
+native/.zig-cache/
+native/zig-out/
+.zig-cache/
 assets/webm
 assets/app-icon.ico
+assets/app-icon.icns
+assets/app-icon.png
 assets/tray-icon.png
+assets/tray-icon@2x.png
 *.log
 .DS_Store
 .env

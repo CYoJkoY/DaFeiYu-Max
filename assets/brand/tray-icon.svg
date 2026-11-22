@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DaFeiYu tray icon">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#163C88"/>
+      <stop offset="1" stop-color="#2F6FE0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#bg)"/>
+  <path d="M18 34c-6-1-10-5-13-11 6 0 11 2 14 6z" fill="#8BD3FF"/>
+  <path d="M19 46c-5-1-9-4-12-8 5-1 9 0 12 3z" fill="#6DBBF7"/>
+  <path d="M17 38c5-11 13-17 24-17 14 0 23 9 23 22 0 12-9 20-23 20-10 0-18-4-22-12-2-4-3-8-2-13z" fill="#E8F8FF"/>
+  <ellipse cx="36" cy="46" rx="13" ry="7" fill="#BFE8FF"/>
+  <circle cx="42" cy="36" r="3.4" fill="#102A5C"/>
+  <circle cx="43" cy="35" r=".9" fill="#fff"/>
+  <circle cx="52" cy="15" r="7" fill="#FFD05A"/>
+  <path d="M52 10v5m-4 4h8" stroke="#5D3700" stroke-width="2" stroke-linecap="round"/>
+</svg>

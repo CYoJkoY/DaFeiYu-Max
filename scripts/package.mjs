@@ -139,22 +139,41 @@ async function main() {
   mkdirSync(join(root, '.runtime'), { recursive: true });
   const staging = mkdtempSync(join(root, '.runtime/package-'));
   try {
-    cpSync(join(root, 'src'), join(staging, 'src'), {
-      recursive: true,
-      filter: source => !isVendorPath(source),
-    });
+    // The TypeScript build already produced the runtime layout, so the app
+    // ships dist/ verbatim instead of raw sources. Only the known runtime
+    // entries are copied so a previous packaging run cannot leak into the
+    // next bundle.
+    const runtimeEntries = [
+      'main.cjs', 'preload.cjs', 'pet.js', 'panel.js',
+      'pet.html', 'pet.css', 'panel.html', 'panel.css',
+      'core', 'native',
+    ];
+    mkdirSync(join(staging, 'dist'), { recursive: true });
+    for (const entry of runtimeEntries) {
+      const source = join(root, 'dist', entry);
+      if (!existsSync(source)) throw new Error(`Missing build output: dist/${entry} (run npm run build first)`);
+      cpSync(source, join(staging, 'dist', entry), {
+        recursive: true,
+        filter: file => !isVendorPath(file),
+      });
+    }
     mkdirSync(join(staging, 'assets'));
     for (const name of ['catalog.json', 'upstream.json', 'provider-icons', 'webm']) {
       cpSync(join(root, 'assets', name), join(staging, 'assets', name), { recursive: true, dereference: true });
     }
     const trayIcon = join(root, 'assets', 'tray-icon.png');
     cpSync(trayIcon, join(staging, 'assets', 'tray-icon.png'));
+    // dist/native holds the Zig sidecar; the packaged app also probes
+    // <app>/native/<binary>, so mirror it next to the app root.
+    if (existsSync(join(root, 'dist', 'native'))) {
+      cpSync(join(root, 'dist', 'native'), join(staging, 'native'), { recursive: true });
+    }
     for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses']) {
       cpSync(join(root, name), join(staging, name), { recursive: true });
     }
     writeFileSync(join(staging, 'package.json'), JSON.stringify({
       name: metadata.name, version: metadata.version, description: metadata.description,
-      author: metadata.author, license: metadata.license, main: 'src/main.cjs',
+      author: metadata.author, license: metadata.license, main: 'dist/main.cjs',
     }, null, 2));
     console.log((await packageTarget(metadata, staging, target)).join('\n'));
   } finally {

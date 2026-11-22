@@ -48,3 +48,15 @@ footer { text-align: center; margin-top: 24px; font-size: 10px; }
 footer a { color: #4f78b0; text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 .error { color: #a27660; font-size: 12px; line-height: 1.6; }
+.social-actions { justify-content: flex-end; margin-top: 8px; }
+.social-row { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e6edf7; }
+.social-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4d6483; }
+.social-head strong { flex: 1; font-weight: 600; }
+.social-row input[type='url'] { width: 100%; margin-top: 8px; border: 1px solid #dde6f3; background: #f8faff; border-radius: 9px; padding: 7px 10px; font-size: 11px; color: #37516f; }
+.social-row button { margin-top: 6px; }
+.draft { margin-top: 12px; padding: 12px; border: 1px solid #e4ecf8; border-radius: 12px; background: #f9fbff; }
+.draft-text { font-size: 12px; line-height: 1.6; color: #334c6b; margin: 0; white-space: pre-wrap; }
+.draft-actions { display: flex; gap: 6px; margin-top: 8px; }
+.draft-actions button { margin: 0; }
+.draft-actions .secondary { margin-top: 0; }
+textarea { width: 100%; border: 1px solid #dde6f3; background: #f8faff; border-radius: 10px; padding: 9px 11px; font-size: 12px; color: #37516f; resize: vertical; margin-top: 8px; }

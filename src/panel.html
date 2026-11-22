@@ -8,6 +8,24 @@
     <section class="card"><div class="row"><h2>口粮余量</h2><div class="row-actions"><button id="refresh" class="text-button">刷新</button><button id="quota-all" class="quota-switch" type="button" role="switch" aria-checked="true" aria-label="一键显示或隐藏全部额度" title="一键显示或隐藏全部额度"></button></div></div><div id="quota"></div><p class="note" id="quota-time">正在读取 Magpie 额度…</p><p class="note" id="usage"></p></section>
     <section class="card"><div class="row"><h2>来点小节目</h2><span class="badge">106 段动画</span></div><div class="featured"><button data-play="放烟花">✦ 放烟花</button><button data-play="凭空生花">🪄 凭空生花</button><button data-play="蓝鲸现世">🐋 蓝鲸现世</button></div><input id="search" type="search" placeholder="找动作：魔术、吃饭、睡觉…" aria-label="搜索动作"><div id="actions"></div></section>
     <section class="card"><h2>陪伴方式</h2><label class="toggle">跟随 Magpie 请求状态<input type="checkbox" data-setting="followTasks"></label><label class="toggle">空闲时随机玩耍<input type="checkbox" data-setting="active"></label><label class="toggle">暂停动画<input type="checkbox" data-setting="paused"></label><label class="toggle">锁定桌面位置<input type="checkbox" data-setting="locked"></label><label class="toggle">角色大小<select id="size"><option value="360">小</option><option value="460">中</option><option value="560">大</option></select></label><p class="note">可拖到屏幕左右边缘，超出部分的动作会被裁切。快速甩出会弹跳；右键可点播、隐藏或退出。菜单栏 🐋 →「回到屏幕内」可随时找回。默认不开机启动。</p></section>
+    <section class="card">
+      <div class="row"><h2>它最近在关注</h2><span class="badge" id="social-state">未启用</span></div>
+      <p class="note" id="social-summary">社交模块尚未初始化。</p>
+      <label class="toggle">启用社交摘要<input type="checkbox" id="social-enabled"></label>
+      <label class="toggle">允许生成待确认草稿<input type="checkbox" id="social-writes"></label>
+      <div class="row-actions social-actions"><button id="social-refresh" class="text-button">刷新公开动态</button></div>
+      <div id="social-platforms"></div>
+      <p class="note">只读取公开内容；抖音与小黑盒需自备本机桥接，发送一律进入草稿，由你逐条确认。</p>
+      <div id="social-drafts"></div>
+      <p class="note" id="social-highlights"></p>
+      <p class="note" id="social-note"></p>
+    </section>
+    <section class="card">
+      <h2>兴趣关键词</h2>
+      <p class="note">用逗号或换行分隔，最多 20 个；社交摘要会围绕它们挑选公开内容。</p>
+      <textarea id="interests" rows="3" placeholder="DeepSeek，Magpie，编程" aria-label="兴趣关键词"></textarea>
+      <div class="row-actions social-actions"><button id="interests-save" class="secondary">保存兴趣</button></div>
+    </section>
     <footer><a id="repository" href="https://github.com/wolfvoid/magpie-DaFeiYu">github.com/wolfvoid/magpie-DaFeiYu</a></footer>
   </main>
   <script type="module" src="panel.js"></script>

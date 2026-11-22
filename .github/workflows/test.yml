@@ -2,28 +2,97 @@ name: Tests
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   unit:
     name: tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-15, windows-latest]
-    runs-on: ${{ matrix.os }}
+        os: [windows-latest, macos-15, ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
-      - run: npm ci --ignore-scripts
-      - run: npm run build
-      - run: npm test
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Install Pillow
+        run: python -m pip install Pillow==13.0.0
+
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.1
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Typecheck TypeScript
+        run: npm run typecheck
+
+      - name: Prepare animation catalog
+        run: npm run prepare
+
+      - name: Generate icons from the brand PNG masters
+        run: npm run icons
+
+      - name: Build Zig native layer (petkit)
+        working-directory: native
+        run: zig build -Doptimize=ReleaseSafe -Dcpu=baseline
+
+      - name: Run Zig tests
+        working-directory: native
+        run: zig build test
+
+      - name: Build TypeScript into dist/
+        run: npm run build
+
+      - name: Smoke-test petkit ping (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $output = '{"id":1,"op":"ping"}' | & './dist/native/petkit.exe' --serve
+          if ($LASTEXITCODE -ne 0) { throw "petkit exited with code $LASTEXITCODE" }
+          $reply = $output | ConvertFrom-Json
+          if ($reply.id -ne 1 -or $reply.ok -ne $true -or $reply.value -ne 1) {
+            throw "Unexpected petkit response: $output"
+          }
+
+      - name: Smoke-test petkit ping (macOS / Linux)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          output=$(printf '%s\n' '{"id":1,"op":"ping"}' | ./dist/native/petkit --serve)
+          node -e 'const reply = JSON.parse(process.argv[1]); if (reply.id !== 1 || reply.ok !== true || reply.value !== 1) process.exit(1)' "$output"
+
+      - name: Run tests against dist/
+        run: npm test
+
+      - name: Check packaged runtime inputs
+        run: |
+          node --input-type=module -e "import { existsSync } from 'node:fs'; const nativeBinary = process.platform === 'win32' ? 'dist/native/petkit.exe' : 'dist/native/petkit'; const required = ['dist/main.cjs', 'dist/preload.cjs', 'dist/pet.js', 'dist/panel.js', 'dist/pet.html', 'dist/pet.css', 'dist/panel.html', 'dist/panel.css', nativeBinary, 'assets/catalog.json', 'assets/tray-icon.png', 'assets/app-icon.ico', 'assets/app-icon.icns']; const missing = required.filter(path => !existsSync(path)); if (missing.length) throw new Error('Missing CI build inputs: ' + missing.join(', '));"
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.os }}
+          path: dist/
+          if-no-files-found: ignore
+          retention-days: 7
