@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { APP_NAME, iconPathFor, isVendorPath, resolveTarget } from '../scripts/package.mjs';
+import { APP_NAME, iconPathFor, isDebugSymbol, isVendorPath, resolveTarget } from '../scripts/package.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const python = process.platform === 'win32' ? 'python' : 'python3';
@@ -23,6 +23,11 @@ test('packaging selects native targets and icons without changing Mac defaults',
 test('development sources are excluded with either path separator', () => {
   for (const source of ['src/vendor', 'src\\vendor', 'vendor']) assert.equal(isVendorPath(source), true);
   for (const source of ['src/renderer/pet.ts', 'src\\main.ts']) assert.equal(isVendorPath(source), false);
+});
+
+test('debug symbols are excluded from release bundles', () => {
+  for (const source of ['dist/native/petkit.pdb', 'native\\PETKIT.PDB']) assert.equal(isDebugSymbol(source), true);
+  for (const source of ['dist/native/petkit.exe', 'dist/main.cjs']) assert.equal(isDebugSymbol(source), false);
 });
 
 test('Windows ZIP preserves Unicode names and binary contents and ships no installer', t => {
