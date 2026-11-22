@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { magpieAppCandidates } from '../src/platform.cjs';
-import { resolvePort, readLocal } from '../src/magpie.mjs';
+import { magpieAppCandidates } from '../dist/core/platform.js';
+import { resolvePort, readLocal } from '../dist/core/magpie.js';
 
 test('Magpie app discovery preserves Mac locations and supports Windows paths with spaces', () => {
   assert.deepEqual(magpieAppCandidates({ platform: 'darwin', home: '/Users/test', env: {} }), [

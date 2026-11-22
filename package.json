@@ -38,16 +38,21 @@
     "permissions": []
   },
   "scripts": {
-    "build": "node scripts/prepare.mjs && esbuild src/vendor/pickers.ts --format=esm --outfile=src/pickers.mjs",
-    "start": "electron src/main.cjs",
+    "prepare": "node scripts/prepare.mjs",
+    "build": "node scripts/build.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "typecheck": "tsc --noEmit",
+    "start": "electron dist/main.cjs",
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check.mjs",
     "package": "node scripts/package.mjs"
   },
   "devDependencies": {
-    "electron": "43.3.0",
     "@electron/packager": "20.3.0",
+    "@types/node": "^26.6.6",
+    "electron": "43.3.0",
     "esbuild": "0.28.2",
-    "jsonc-parser": "3.3.1"
+    "jsonc-parser": "3.3.1",
+    "typescript": "^7.0.2"
   }
 }

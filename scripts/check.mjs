@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { ActivityReader, readQuota } from '../src/magpie.mjs';
+import { ActivityReader, readQuota } from '../dist/core/magpie.js';
 
 const manifest = JSON.parse(readFileSync(new URL('../assets/upstream.json', import.meta.url)));
 for (const entry of manifest.files) {

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="DeepSeek Pet Max whale icon">
+  <defs>
+    <linearGradient id="bg" x1="140" y1="80" x2="880" y2="960" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#101A3D"/>
+      <stop offset=".48" stop-color="#193B86"/>
+      <stop offset="1" stop-color="#2D67D9"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(520 500) rotate(90) scale(460)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7FD8FF" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#7FD8FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="whale" x1="330" y1="300" x2="760" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset=".52" stop-color="#DDF4FF"/>
+      <stop offset="1" stop-color="#8FD0FF"/>
+    </linearGradient>
+    <linearGradient id="tail" x1="130" y1="380" x2="330" y2="660" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A6DEFF"/>
+      <stop offset="1" stop-color="#5EA9F6"/>
+    </linearGradient>
+    <linearGradient id="light" x1="700" y1="120" x2="820" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE8A3"/>
+      <stop offset="1" stop-color="#FFB52E"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#061129" flood-opacity=".35"/>
+    </filter>
+    <filter id="lampGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="32" y="32" width="960" height="960" rx="228" fill="url(#bg)"/>
+  <rect x="43" y="43" width="938" height="938" rx="217" fill="none" stroke="#B9E9FF" stroke-opacity=".2" stroke-width="6"/>
+  <circle cx="512" cy="530" r="430" fill="url(#glow)"/>
+
+  <path d="M76 760c128-62 220-55 334-13 118 44 226 48 354-9 72-33 139-37 184-22v90c-93-12-138 12-211 44-118 52-238 45-349 3-91-35-181-28-312 24z"
+        fill="#7ED9FF" fill-opacity=".12"/>
+  <path d="M54 850c145-50 242-43 342-6 125 46 243 43 359-5 78-32 139-33 215-7v74c-53-9-101 5-166 31-126 51-250 51-380 4-94-34-184-28-289 14z"
+        fill="#65B9FF" fill-opacity=".12"/>
+  <path d="M96 145c84-64 179-87 280-74" fill="none" stroke="#B9ECFF" stroke-opacity=".22" stroke-width="18" stroke-linecap="round"/>
+
+  <g filter="url(#shadow)">
+    <path d="M330 518c-75-12-145-57-199-133-13-19 3-42 25-37 77 16 139 52 190 101z" fill="url(#tail)"/>
+    <path d="M329 666c-73 4-139-20-199-72-17-14-12-40 10-43 78-9 143 7 201 45z" fill="#77BDFB"/>
+    <path d="M298 582c56-139 169-218 314-218 182 0 300 119 300 286 0 156-119 265-296 265-136 0-241-55-297-160-21-40-31-92-21-173z" fill="url(#whale)"/>
+    <path d="M427 613c18-49 65-82 119-82 63 0 111 27 146 71 21 27 15 52-19 69-47 23-94 34-142 34-59 0-102-15-117-41-9-15-2-32 13-51z" fill="#F9FDFF" fill-opacity=".92"/>
+    <path d="M491 747c31-54 97-100 168-104 76-5 143 31 178 91-36 53-100 88-174 88-73 0-132-27-172-75z" fill="#BDE7FF" fill-opacity=".7"/>
+    <path d="M659 612c0-37 22-63 60-63s61 26 61 63-23 62-61 62-60-25-60-62z" fill="#102A5C"/>
+    <circle cx="678" cy="590" r="15" fill="#FFFFFF"/>
+    <circle cx="701" cy="621" r="7" fill="#7ED9FF"/>
+    <path d="M723 705c26-25 59-34 91-18-20 35-54 49-91 34z" fill="#F4A7B9" fill-opacity=".74"/>
+    <path d="M773 707c29 11 51 31 66 62" fill="none" stroke="#5A8CC9" stroke-width="11" stroke-linecap="round" stroke-opacity=".7"/>
+    <path d="M415 620c-41 12-68 47-70 94 31-24 55-52 70-94z" fill="#6FB9F8"/>
+    <path d="M469 414c32-25 73-27 108-9" fill="none" stroke="#FFFFFF" stroke-opacity=".7" stroke-width="15" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#lampGlow)">
+    <circle cx="775" cy="220" r="91" fill="#FFC846" fill-opacity=".22"/>
+    <circle cx="775" cy="220" r="67" fill="url(#light)"/>
+    <path d="M775 180v54m0 0c-15 0-27 12-27 27m27-27c15 0 27 12 27 27m-40 9h26m-20 16h14"
+          fill="none" stroke="#5D3700" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M890 142l7 19 19 7-19 7-7 19-7-19-19-7 19-7z" fill="#FFE9A8"/>
+    <path d="M677 144l5 13 13 5-13 5-5 13-5-13-13-5 13-5z" fill="#FFE9A8" fill-opacity=".85"/>
+  </g>
+
+  <g fill="none" stroke="#A9E5FF" stroke-linecap="round">
+    <path d="M188 300c30-20 61-30 93-30" stroke-width="12" stroke-opacity=".4"/>
+    <path d="M166 342c22-14 44-21 67-21" stroke-width="9" stroke-opacity=".26"/>
+  </g>
+</svg>
