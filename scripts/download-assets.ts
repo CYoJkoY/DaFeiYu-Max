@@ -42,7 +42,9 @@ async function fetchAnimation(commit: string, entry: UpstreamFile, destination: 
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(45_000) });
+      // Follow redirects like the old urllib script did; the size and SHA-1
+      // check below is what actually guarantees we kept the upstream bytes.
+      const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(45_000) });
       if (!response.ok) throw new Error(`HTTP ${response.status} for ${entry.name}`);
       const data = Buffer.from(await response.arrayBuffer());
       if (data.length !== entry.size || digest(data) !== entry.sha) throw new Error(`Checksum mismatch: ${entry.name}`);
