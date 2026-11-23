@@ -12,5 +12,9 @@ Magpie 接口与集成文档：[yetone/magpie](https://github.com/yetone/magpie)
 
 运行时与构建工具包括 [Electron](https://github.com/electron/electron)、[electron/packager](https://github.com/electron/packager)、[esbuild](https://github.com/evanw/esbuild)、[jsonc-parser](https://github.com/microsoft/node-jsonc-parser) 与 [Zig](https://ziglang.org/)。依赖保留各自许可证；Electron 应用包还包含 Chromium 等组件及其随包许可。
 
+## 品牌与图标
+
+应用图标与托盘图标的母版是本项目原创绘制的 `assets/brand/app-icon.svg` 与 `assets/brand/tray-icon.svg`（及渲染出的 1024px PNG）。形象灵感来自 DeepSeek 公开品牌标志里的鲸鱼意象，并结合上游 dsh-pet 蓝发角色的配色与「大肥鱼」主题重新构图，**不是** DeepSeek 官方标志，也不代表 DeepSeek 的授权、合作或背书。`scripts/icons.py` 只从这些母版生成 `.png`、`.ico`、`.icns` 以及 `magpie/icon.png`，仓库内不引用任何官方品牌源文件。
+
 此项目为独立社区工具，与 OpenAI、DeepSeek、Magpie 无官方隶属关系。仓库新增代码的 MIT 许可不覆盖第三方角色与动画素材。
 
