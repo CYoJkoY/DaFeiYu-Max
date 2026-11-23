@@ -2,7 +2,7 @@
 
 欢迎改进 magpie-DaFeiYu。请保持 Magpie 接入只读、可断连降级，不发送模型请求。
 
-本项目是单一共享代码库，同时服务 Windows 10+ x64 与 Apple Silicon Mac（macOS 12+）。主界面、动画、请求灯泡、额度面板与 Magpie 本地读取共用同一份代码；平台差异只允许出现在很窄的范围（安装脚本、数据目录、托盘/菜单外观、打包与签名）。不要创建平台分支或分叉，也不要在共享逻辑里散落平台判断。
+本项目是单一共享代码库，同时服务 Windows 10+ x64 与 Apple Silicon Mac（macOS 12+）。主界面、动画、请求灯泡、额度面板与 Magpie 本地读取共用同一份代码；平台差异只允许出现在很窄的范围（数据目录、托盘/菜单外观、打包与签名）。不要创建平台分支或分叉，也不要在共享逻辑里散落平台判断。
 
 ## 提交问题
 
@@ -30,11 +30,11 @@ npm start
 1. Fork 仓库，创建功能分支。
 2. 按 README 下载依赖与素材。
 3. 修改共享代码；为账号匹配、调度、边界等行为提供有意义的测试。
-4. 运行 `npm test` 与 `npm run check`；界面或安装脚本的改动，在你手头的操作系统上实际验证，并在 PR 里注明验证过的系统。
+4. 运行 `npm test` 与 `npm run check`；界面或打包方式的改动，在你手头的操作系统上实际验证，并在 PR 里注明验证过的系统。
 5. CI 在 Windows、macOS、Linux 上运行单元测试，并在 macOS 打包 Apple Silicon、Windows 打包 x64；打包产物以 CI 为准。不要声称在没实际运行过的系统上做过界面验证。
 6. PR 写明问题、改动与验证结果；不要提交 `node_modules/`、下载的视频、构建产物或私人运行报告。
 
-安装脚本约定：Windows 产物为 `BlueDaFeiYu.exe` + `install.ps1`，按用户安装到 `%LocalAppData%\Programs\magpie-DaFeiYu`，只创建开始菜单快捷方式，不需要管理员权限、不设开机启动；macOS 产物为 Apple Silicon arm64 的「蓝色大肥鱼.app」，仅 ad-hoc 签名。
+分发约定：Windows 压缩包解压后直接运行 `BlueDaFeiYu.exe`，不包含安装器；macOS 产物为 Apple Silicon arm64 的「蓝色大肥鱼.app」，仅 ad-hoc 签名。
 
 发布仍限定在 `0.1.x`。更新 `package.json` 和 `package-lock.json` 版本、添加对应的 `docs/releases/v0.1.x.md` 后推送到 `main`，发布流程会检查版本尚未发布，在两种系统完成构建后创建标签和 Release。也支持推送匹配版本的标签或手动运行工作流；已有标签或版本不会被覆盖。
 

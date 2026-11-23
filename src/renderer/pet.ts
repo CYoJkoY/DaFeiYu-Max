@@ -5,12 +5,13 @@
 import { AnimationDirector } from '../core/animation.js';
 import { quotaEntries } from '../core/quota-display.js';
 import { providerIconSource, providerInitial } from '../core/provider-icons.js';
-import type { Activity, PetSettings, Quota } from '../core/types.js';
+import type { Activity, CatalogUpdate, PetSettings, PluginSnapshot, Quota, Theme } from '../core/types.js';
 
 const api = window.pet;
 const videos = [...document.querySelectorAll('video')];
 const lights = document.querySelector<HTMLElement>('#request-lights')!;
 const stage = document.querySelector<HTMLElement>('#stage')!;
+const festivalBanner = document.querySelector<HTMLElement>('#festival-banner')!;
 const hitCanvas = document.createElement('canvas');
 hitCanvas.width = 256;
 hitCanvas.height = 144;
@@ -29,6 +30,29 @@ let lastInteractive: boolean | undefined;
 let failureCount = 0;
 
 window.petDiagnostics = { loaded: false, errors: [], played: [], transparent: false };
+
+function renderPlugins(value: PluginSnapshot, theme: Theme): void {
+  document.documentElement.style.setProperty('--accent', theme.accent || '#2f6fe0');
+  const festival = value.festival;
+  if (!festival) {
+    festivalBanner.hidden = true;
+    festivalBanner.replaceChildren();
+    stage.removeAttribute('title');
+    document.title = '蓝色大肥鱼';
+    return;
+  }
+  festivalBanner.replaceChildren();
+  const accessories = document.createElement('span');
+  accessories.className = 'festival-accessories';
+  accessories.textContent = festival.accessories.join(' ');
+  const label = document.createElement('span');
+  label.textContent = festival.greeting || `${festival.label}装扮`;
+  festivalBanner.append(accessories, label);
+  festivalBanner.hidden = false;
+  festivalBanner.title = `${festival.label} · ${festival.greeting || '节日装扮'}`;
+  stage.title = festival.greeting || festival.label;
+  document.title = `${festival.label} · 蓝色大肥鱼`;
+}
 
 function describe(): void {
   lights.dataset.visible = String(settings?.showBulbs !== false);
@@ -176,6 +200,15 @@ api.on('activity', value => {
 });
 api.on('settings', value => { if (director) applySettings(value as PetSettings); });
 api.on('quota', value => { quota = value as Quota; renderQuota(); });
+api.on('catalog', value => {
+  if (!director) return;
+  const update = value as CatalogUpdate;
+  director.setCatalog(update.catalog);
+  renderPlugins(update.plugins, update.theme);
+  if (!update.catalog.names.includes(director.current)) {
+    void play(director.select(update.catalog.idle[0]));
+  }
+});
 api.on('play', name => {
   if (!director) return;
   if (settings.paused) api.setting('paused', false);
@@ -261,6 +294,7 @@ settings = initial.settings;
 activity = initial.activity;
 quota = initial.quota;
 director = new AnimationDirector(initial.catalog);
+renderPlugins(initial.plugins, initial.theme);
 applySettings(settings);
 await play(director.next());
 

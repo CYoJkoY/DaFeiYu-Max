@@ -62,6 +62,12 @@ export function isVendorPath(source) {
   return normalized === 'vendor' || normalized.endsWith('/vendor');
 }
 
+// Zig emits a .pdb next to the Windows sidecar; debug symbols do not belong in
+// a shipped release.
+export function isDebugSymbol(source) {
+  return String(source).toLowerCase().endsWith('.pdb');
+}
+
 function trimLocales(resources) {
   const keep = ['en.lproj', 'en_US.lproj', 'en_GB.lproj', 'zh_CN.lproj', 'zh_TW.lproj'];
   for (const entry of readdirSync(resources)) {
@@ -113,12 +119,10 @@ async function packageTarget(metadata, staging, target) {
       postProcessDarwin(join(output, `${APP_NAME}.app`));
       artifacts.push(join(output, `${APP_NAME}.app`));
     } else {
-      // Portable Windows distribution: the app directory plus the optional per-user installer.
-      const installer = join(root, 'scripts', 'windows', 'install.ps1');
-      if (!existsSync(installer)) throw new Error(`Missing installer script: ${installer}`);
+      // Portable Windows distribution: unzip and run the application directly.
       const zip = join(root, 'dist', windowsZipName(metadata.version));
       execFileSync(process.platform === 'win32' ? 'python' : 'python3',
-        [join(root, 'scripts', 'windows', 'archive.py'), output, installer, zip], { stdio: 'inherit' });
+        [join(root, 'scripts', 'windows', 'archive.py'), output, zip], { stdio: 'inherit' });
       artifacts.push(zip);
     }
   }
@@ -154,7 +158,7 @@ async function main() {
       if (!existsSync(source)) throw new Error(`Missing build output: dist/${entry} (run npm run build first)`);
       cpSync(source, join(staging, 'dist', entry), {
         recursive: true,
-        filter: file => !isVendorPath(file),
+        filter: file => !isVendorPath(file) && !isDebugSymbol(file),
       });
     }
     mkdirSync(join(staging, 'assets'));
@@ -166,7 +170,10 @@ async function main() {
     // dist/native holds the Zig sidecar; the packaged app also probes
     // <app>/native/<binary>, so mirror it next to the app root.
     if (existsSync(join(root, 'dist', 'native'))) {
-      cpSync(join(root, 'dist', 'native'), join(staging, 'native'), { recursive: true });
+      cpSync(join(root, 'dist', 'native'), join(staging, 'native'), {
+        recursive: true,
+        filter: file => !isDebugSymbol(file),
+      });
     }
     for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses']) {
       cpSync(join(root, name), join(staging, name), { recursive: true });

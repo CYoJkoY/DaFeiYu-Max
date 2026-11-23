@@ -4,7 +4,9 @@
  */
 import { quotaEntries } from '../core/quota-display.js';
 import { providerIconSource, providerInitial } from '../core/provider-icons.js';
-import type { Activity, Catalog, PetSettings, Quota, SocialReport } from '../core/types.js';
+import type {
+  Activity, Catalog, CatalogUpdate, PetSettings, PluginSnapshot, Quota, SocialReport, Theme,
+} from '../core/types.js';
 
 const api = window.pet;
 let catalog: Catalog;
@@ -123,6 +125,90 @@ function renderSettings(value: PetSettings): void {
   }
   document.querySelector<HTMLSelectElement>('#size')!.value = String(value.size);
   document.querySelector<HTMLTextAreaElement>('#interests')!.value = (value.interests || []).join('，');
+}
+
+function renderPlugins(value: PluginSnapshot, theme: Theme): void {
+  document.documentElement.style.setProperty('--accent', theme.accent || '#2f6fe0');
+  const state = document.querySelector<HTMLElement>('#plugin-state')!;
+  const appearance = document.querySelector<HTMLSelectElement>('#appearance')!;
+  const festivalNote = document.querySelector<HTMLElement>('#festival-note')!;
+  const list = document.querySelector<HTMLElement>('#plugin-list')!;
+  const issues = document.querySelector<HTMLElement>('#plugin-issues')!;
+
+  const appearances = value.entries.filter(entry => entry.kind === 'appearance');
+  appearance.replaceChildren();
+  for (const entry of appearances) {
+    const option = document.createElement('option');
+    option.value = entry.id;
+    option.textContent = entry.label;
+    appearance.append(option);
+  }
+  if (value.appearance && appearances.some(entry => entry.id === value.appearance)) {
+    appearance.value = value.appearance;
+  }
+  appearance.disabled = appearances.length <= 1;
+  appearance.onchange = () => api.setting('appearance', appearance.value);
+
+  const externals = value.entries.filter(entry => entry.source === 'external').length;
+  state.textContent = externals ? `内置 + ${externals} 个外部` : '全部内置';
+  festivalNote.textContent = value.festival
+    ? `${value.festival.label}装扮进行中${value.festival.greeting ? `：${value.festival.greeting}` : '。'}${value.festival.accessories.length ? ` ${value.festival.accessories.join(' ')}` : ''}`
+    : '今天没有节日装扮。';
+
+  list.replaceChildren();
+  for (const entry of value.entries.filter(item => item.kind !== 'appearance')) {
+    const row = document.createElement('div');
+    row.className = 'plugin-row';
+    const main = document.createElement('div');
+    main.className = 'plugin-main';
+    const name = document.createElement('strong');
+    name.textContent = entry.label;
+    const badges = document.createElement('span');
+    badges.className = 'plugin-badges';
+    const kind = document.createElement('span');
+    kind.className = 'badge';
+    kind.textContent = entry.kind === 'social' ? '社交' : '节日';
+    badges.append(kind);
+    if (entry.source === 'external') {
+      const source = document.createElement('span');
+      source.className = 'badge';
+      source.textContent = '外部';
+      badges.append(source);
+    }
+    if (entry.active) {
+      const active = document.createElement('span');
+      active.className = 'badge active-badge';
+      active.textContent = '生效中';
+      badges.append(active);
+    }
+    name.append(' ', badges);
+    const description = document.createElement('p');
+    description.className = 'note plugin-description';
+    description.textContent = entry.description;
+    if (entry.kind === 'social') {
+      description.textContent += ` 能力：${entry.reads ? '读取' : '不读取'}${entry.writes ? '，写入需确认' : '，只读'}。`;
+    }
+    if (entry.requiresTrust) {
+      description.textContent += ' 此插件声明了更高权限，启用写入后仍需逐条确认。';
+    }
+    main.append(name, description);
+    row.append(main);
+    if (entry.kind === 'festival') {
+      const toggle = document.createElement('input');
+      toggle.type = 'checkbox';
+      toggle.checked = entry.enabled !== false;
+      toggle.setAttribute('aria-label', `${toggle.checked ? '停用' : '启用'}${entry.label}`);
+      toggle.onchange = () => api.setting('pluginEnabled', { id: entry.id, enabled: toggle.checked });
+      row.append(toggle);
+    }
+    list.append(row);
+  }
+
+  issues.hidden = value.issues.length === 0;
+  issues.className = value.issues.length ? 'error plugin-issues' : 'note plugin-issues';
+  issues.textContent = value.issues.length
+    ? `有 ${value.issues.length} 个外部插件未加载：${value.issues.join('；')}`
+    : '';
 }
 
 function parseInterests(text: string): string[] {
@@ -309,6 +395,12 @@ api.on('settings', value => {
   if (lastQuota) renderQuota(lastQuota);
 });
 api.on('social', value => renderSocial(value as SocialReport));
+api.on('catalog', value => {
+  const update = value as CatalogUpdate;
+  catalog = update.catalog;
+  renderPlugins(update.plugins, update.theme);
+  filterActions();
+});
 
 void api.getSnapshot().then(snapshot => {
   catalog = snapshot.catalog;
@@ -316,6 +408,7 @@ void api.getSnapshot().then(snapshot => {
   renderSettings(snapshot.settings);
   renderQuota(snapshot.quota);
   renderSocial(snapshot.social ?? null);
+  renderPlugins(snapshot.plugins, snapshot.theme);
   filterActions();
 });
 

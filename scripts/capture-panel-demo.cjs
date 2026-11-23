@@ -30,8 +30,8 @@ const snapshot = {
 app.whenReady().then(async () => {
   ipcMain.handle('snapshot', () => snapshot);
   const window = new BrowserWindow({ width: 460, height: 760, show: false,
-    webPreferences: { preload: path.join(root, 'src/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
-  await window.loadFile(path.join(root, 'src/panel.html'));
+    webPreferences: { preload: path.join(root, 'dist/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+  await window.loadFile(path.join(root, 'dist/panel.html'));
   await new Promise(resolve => setTimeout(resolve, 500));
   const output = path.join(root, 'qa');
   mkdirSync(output, { recursive: true });

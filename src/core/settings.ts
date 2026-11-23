@@ -1,4 +1,4 @@
-import type { PetSettings, PlatformSettings, SocialSettings } from './types.js';
+import type { PetSettings, PlatformSettings, PluginSettings, SocialSettings } from './types.js';
 
 export const PET_SIZES = [360, 460, 560] as const;
 export type PetSize = (typeof PET_SIZES)[number];
@@ -9,6 +9,11 @@ export const DEFAULT_SOCIAL: SocialSettings = {
   allowWrites: false,
   quietHours: { start: 23, end: 7 },
   platforms: {},
+};
+
+export const DEFAULT_PLUGINS: PluginSettings = {
+  appearance: null,
+  enabled: {},
 };
 
 export const DEFAULT_SETTINGS: PetSettings = {
@@ -24,7 +29,10 @@ export const DEFAULT_SETTINGS: PetSettings = {
   y: null,
   interests: ['DeepSeek', 'Magpie', '编程'],
   social: DEFAULT_SOCIAL,
+  plugins: DEFAULT_PLUGINS,
 };
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const BOOLEAN_KEYS = ['active', 'paused', 'locked', 'followTasks', 'showBulbs', 'showQuotas'] as const;
 
@@ -104,6 +112,23 @@ export function sanitizeSocial(value: unknown, knownPlatforms: readonly string[]
   };
 }
 
+/** Keep only declarative, well-formed plugin selections; never trusted as code. */
+export function sanitizePlugins(value: unknown): PluginSettings {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const appearance = typeof source.appearance === 'string' && source.appearance.length <= 64
+    && SLUG_PATTERN.test(source.appearance) ? source.appearance : null;
+  const enabled: Record<string, boolean> = {};
+  const rawEnabled = source.enabled && typeof source.enabled === 'object' && !Array.isArray(source.enabled)
+    ? source.enabled as Record<string, unknown>
+    : {};
+  for (const [id, flag] of Object.entries(rawEnabled)) {
+    if (id.length > 64 || !SLUG_PATTERN.test(id)) continue;
+    enabled[id] = flag === true;
+    if (Object.keys(enabled).length >= 200) break;
+  }
+  return { appearance, enabled };
+}
+
 /** Merge a persisted settings file into the defaults, discarding anything invalid. */
 export function normalizeSettings(saved: unknown, knownPlatforms: readonly string[] = []): PetSettings {
   const settings: PetSettings = {
@@ -111,6 +136,7 @@ export function normalizeSettings(saved: unknown, knownPlatforms: readonly strin
     hiddenQuotas: {},
     interests: [...DEFAULT_SETTINGS.interests],
     social: { ...DEFAULT_SOCIAL, platforms: {} },
+    plugins: { appearance: null, enabled: {} },
   };
   if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return settings;
   const record = saved as Record<string, unknown>;
@@ -123,5 +149,6 @@ export function normalizeSettings(saved: unknown, knownPlatforms: readonly strin
   }
   settings.interests = sanitizeInterests(record.interests);
   settings.social = sanitizeSocial(record.social, knownPlatforms);
+  settings.plugins = sanitizePlugins(record.plugins);
   return settings;
 }

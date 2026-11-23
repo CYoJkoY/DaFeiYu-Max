@@ -43,7 +43,7 @@
 | 🖐 **真的能放在桌边** | 可拖动、甩动弹跳、贴边摆放；允许动作越出屏幕，不再被透明窗口卡在中间。 |
 | 🔒 **只看本机，不碰聊天** | 只读 Magpie 的本地状态；不调用模型、不读 Codex 数据库、不保存账号邮箱或提示词。 |
 
-底栏只有三件事：**换动作、暂停/继续、更多**。两个平台都默认不开机启动，也不需要登录任何第三方账号。Windows 安装只写入当前用户目录，无需管理员权限。
+底栏只有三件事：**换动作、暂停/继续、更多**。两个平台都默认不开机启动，也不需要登录任何第三方账号。Windows 版解压即用，不写入安装目录。
 
 ## 安装
 
@@ -54,19 +54,12 @@
 **Windows 10+ x64**
 
 1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.5-Windows-x64.zip` 并解压。
-2. 想免安装使用，进入解压后的 `蓝色大肥鱼-win32-x64` 文件夹，双击 `BlueDaFeiYu.exe`。
-3. 想装进当前用户账户，就在解压目录里执行：
-
-   ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
-   ```
-
-   安装到 `%LocalAppData%\Programs\magpie-DaFeiYu`，只创建「开始菜单」快捷方式：不需要管理员权限，也不会设置开机启动。`-ExecutionPolicy Bypass` 只作用于这一次进程，不会修改系统的执行策略。
-4. 从「开始菜单」打开「蓝色大肥鱼」，并启动本机 [Magpie](https://github.com/yetone/magpie)。
+2. 进入解压后的 `蓝色大肥鱼-win32-x64` 文件夹，双击 `BlueDaFeiYu.exe`。压缩包不含安装器，应用可从任意文件夹直接运行。
+3. 启动本机 [Magpie](https://github.com/yetone/magpie)。
 
 Windows 版没有代码签名。若 SmartScreen 拦截，请先核对下载来源，再选择继续运行；不要关闭系统安全防护。
 
-更新前先从托盘菜单退出桌宠，再运行新版本的 `install.ps1`。卸载时运行已安装目录中的 `install.ps1 -Uninstall`；用户设置会保留。
+更新时退出桌宠，将新版本解压到新文件夹后运行；删除旧文件夹即可卸载。用户设置保留在应用数据目录中。
 
 **macOS（Apple Silicon）**
 
@@ -95,7 +88,7 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 ## 一个仓库，两个平台
 
 - 主界面、动画播放、请求灯泡、额度面板与本地 Magpie 读取共用同一份代码，Windows 与 macOS 行为一致。
-- 平台差异被限制在很窄的范围：安装方式（`install.ps1` 或拖入「应用程序」）、应用自身数据目录、托盘图标（Windows 用 PNG、macOS 用 emoji）、打包与签名。
+- 平台差异被限制在很窄的范围：应用数据目录、托盘图标（Windows 用 PNG、macOS 用 emoji）、打包与签名。Windows 解压即用，macOS 将 App 拖入「应用程序」。
 - Magpie 本地配置沿用官方同一路径 `~/.config/magpie/settings.json`（遵循 `XDG_CONFIG_HOME`），Windows 与 macOS 一致，本应用只读取、不修改。
 - 不维护平台分支或分叉；改动先在共享代码里实现，确属平台差异的才单独处理。
 - 单元测试由 CI 在 Windows、macOS、Linux 三个平台运行；发布产物在 macOS 打包 Apple Silicon，在 Windows 打包 x64。

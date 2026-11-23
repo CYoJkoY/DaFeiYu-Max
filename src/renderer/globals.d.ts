@@ -4,7 +4,7 @@
  * both bundles.
  */
 import type {
-  Activity, Catalog, PetSettings, Quota, SocialReport, Snapshot,
+  Activity, Catalog, CatalogUpdate, PetSettings, PluginSnapshot, Quota, SocialReport, Snapshot, Theme,
 } from '../core/types.js';
 
 export interface PetApi {
@@ -25,7 +25,7 @@ export interface PetApi {
   socialConfigure(platform: string, patch: Record<string, unknown>): Promise<SocialReport | null>;
   socialApprove(id: string): Promise<{ report: SocialReport; ok: boolean; note: string } | null>;
   socialReject(id: string): Promise<SocialReport | null>;
-  on(channel: 'snapshot' | 'activity' | 'quota' | 'play' | 'cursor' | 'settings' | 'social', callback: (value: any) => void): void;
+  on(channel: 'snapshot' | 'activity' | 'quota' | 'play' | 'cursor' | 'settings' | 'social' | 'catalog', callback: (value: any) => void): void;
 }
 
 export interface PetDiagnostics {
@@ -44,4 +44,6 @@ declare global {
   }
 }
 
-export type { Activity, Catalog, PetSettings, Quota, SocialReport, Snapshot };
+export type {
+  Activity, Catalog, CatalogUpdate, PetSettings, PluginSnapshot, Quota, SocialReport, Snapshot, Theme,
+};

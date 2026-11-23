@@ -1,72 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="DeepSeek Pet Max whale icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="DaFeiYu original rice whale maid icon">
   <defs>
-    <linearGradient id="bg" x1="140" y1="80" x2="880" y2="960" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#101A3D"/>
-      <stop offset=".48" stop-color="#193B86"/>
-      <stop offset="1" stop-color="#2D67D9"/>
+    <linearGradient id="bg" x1="150" y1="70" x2="880" y2="960" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F1B3E"/>
+      <stop offset=".5" stop-color="#1B3F8C"/>
+      <stop offset="1" stop-color="#2E6FE0"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(520 500) rotate(90) scale(460)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7FD8FF" stop-opacity=".34"/>
-      <stop offset="1" stop-color="#7FD8FF" stop-opacity="0"/>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(520 500) rotate(90) scale(470)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8FE0FF" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#8FE0FF" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="whale" x1="330" y1="300" x2="760" y2="760" gradientUnits="userSpaceOnUse">
+    <linearGradient id="rice" x1="360" y1="300" x2="740" y2="820" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset=".55" stop-color="#FBF5E6"/>
+      <stop offset="1" stop-color="#EBDCC0"/>
+    </linearGradient>
+    <linearGradient id="tail" x1="150" y1="430" x2="330" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#CFE9FF"/>
+      <stop offset="1" stop-color="#8FC0F5"/>
+    </linearGradient>
+    <linearGradient id="apron" x1="430" y1="560" x2="640" y2="800" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF"/>
-      <stop offset=".52" stop-color="#DDF4FF"/>
-      <stop offset="1" stop-color="#8FD0FF"/>
+      <stop offset="1" stop-color="#E8F1FD"/>
     </linearGradient>
-    <linearGradient id="tail" x1="130" y1="380" x2="330" y2="660" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#A6DEFF"/>
-      <stop offset="1" stop-color="#5EA9F6"/>
-    </linearGradient>
-    <linearGradient id="light" x1="700" y1="120" x2="820" y2="250" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFE8A3"/>
-      <stop offset="1" stop-color="#FFB52E"/>
+    <linearGradient id="frill" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DFEAF8"/>
     </linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#061129" flood-opacity=".35"/>
-    </filter>
-    <filter id="lampGlow" x="-120%" y="-120%" width="340%" height="340%">
-      <feGaussianBlur stdDeviation="18" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#061129" flood-opacity=".34"/>
     </filter>
   </defs>
 
   <rect x="32" y="32" width="960" height="960" rx="228" fill="url(#bg)"/>
-  <rect x="43" y="43" width="938" height="938" rx="217" fill="none" stroke="#B9E9FF" stroke-opacity=".2" stroke-width="6"/>
-  <circle cx="512" cy="530" r="430" fill="url(#glow)"/>
+  <rect x="43" y="43" width="938" height="938" rx="217" fill="none" stroke="#BFEBFF" stroke-opacity=".2" stroke-width="6"/>
+  <circle cx="512" cy="520" r="440" fill="url(#glow)"/>
 
-  <path d="M76 760c128-62 220-55 334-13 118 44 226 48 354-9 72-33 139-37 184-22v90c-93-12-138 12-211 44-118 52-238 45-349 3-91-35-181-28-312 24z"
-        fill="#7ED9FF" fill-opacity=".12"/>
-  <path d="M54 850c145-50 242-43 342-6 125 46 243 43 359-5 78-32 139-33 215-7v74c-53-9-101 5-166 31-126 51-250 51-380 4-94-34-184-28-289 14z"
-        fill="#65B9FF" fill-opacity=".12"/>
-  <path d="M96 145c84-64 179-87 280-74" fill="none" stroke="#B9ECFF" stroke-opacity=".22" stroke-width="18" stroke-linecap="round"/>
+  <path d="M70 790c130-60 224-52 338-12 118 42 228 46 356-10 72-32 140-36 186-20v92c-94-12-140 12-213 44-119 51-240 44-352 2-92-35-183-27-315 26z"
+        fill="#8FD8FF" fill-opacity=".12"/>
+  <path d="M54 872c146-50 244-42 344-4 126 45 245 42 361-6 78-32 140-32 216-6v76c-54-9-102 5-167 31-127 50-252 50-383 3-95-33-185-27-291 15z"
+        fill="#5FB4FF" fill-opacity=".12"/>
 
   <g filter="url(#shadow)">
-    <path d="M330 518c-75-12-145-57-199-133-13-19 3-42 25-37 77 16 139 52 190 101z" fill="url(#tail)"/>
-    <path d="M329 666c-73 4-139-20-199-72-17-14-12-40 10-43 78-9 143 7 201 45z" fill="#77BDFB"/>
-    <path d="M298 582c56-139 169-218 314-218 182 0 300 119 300 286 0 156-119 265-296 265-136 0-241-55-297-160-21-40-31-92-21-173z" fill="url(#whale)"/>
-    <path d="M427 613c18-49 65-82 119-82 63 0 111 27 146 71 21 27 15 52-19 69-47 23-94 34-142 34-59 0-102-15-117-41-9-15-2-32 13-51z" fill="#F9FDFF" fill-opacity=".92"/>
-    <path d="M491 747c31-54 97-100 168-104 76-5 143 31 178 91-36 53-100 88-174 88-73 0-132-27-172-75z" fill="#BDE7FF" fill-opacity=".7"/>
-    <path d="M659 612c0-37 22-63 60-63s61 26 61 63-23 62-61 62-60-25-60-62z" fill="#102A5C"/>
-    <circle cx="678" cy="590" r="15" fill="#FFFFFF"/>
-    <circle cx="701" cy="621" r="7" fill="#7ED9FF"/>
-    <path d="M723 705c26-25 59-34 91-18-20 35-54 49-91 34z" fill="#F4A7B9" fill-opacity=".74"/>
-    <path d="M773 707c29 11 51 31 66 62" fill="none" stroke="#5A8CC9" stroke-width="11" stroke-linecap="round" stroke-opacity=".7"/>
-    <path d="M415 620c-41 12-68 47-70 94 31-24 55-52 70-94z" fill="#6FB9F8"/>
-    <path d="M469 414c32-25 73-27 108-9" fill="none" stroke="#FFFFFF" stroke-opacity=".7" stroke-width="15" stroke-linecap="round"/>
-  </g>
+    <!-- Tail flukes, behind the body. -->
+    <path d="M330 560c-64-14-118-52-158-112-11-17 2-37 22-33 66 14 118 46 160 88z" fill="url(#tail)"/>
+    <path d="M322 690c-62 3-118-16-170-58-15-12-11-34 8-37 67-9 123 5 172 38z" fill="#A6D2FA"/>
 
-  <g filter="url(#lampGlow)">
-    <circle cx="775" cy="220" r="91" fill="#FFC846" fill-opacity=".22"/>
-    <circle cx="775" cy="220" r="67" fill="url(#light)"/>
-    <path d="M775 180v54m0 0c-15 0-27 12-27 27m27-27c15 0 27 12 27 27m-40 9h26m-20 16h14"
-          fill="none" stroke="#5D3700" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M890 142l7 19 19 7-19 7-7 19-7-19-19-7 19-7z" fill="#FFE9A8"/>
-    <path d="M677 144l5 13 13 5-13 5-5 13-5-13-13-5 13-5z" fill="#FFE9A8" fill-opacity=".85"/>
-  </g>
+    <!-- Rice-grain body. -->
+    <path d="M545 236c150 62 250 176 250 306 0 156-112 268-253 268S290 698 290 542c0-130 103-244 255-306z" fill="url(#rice)"/>
 
-  <g fill="none" stroke="#A9E5FF" stroke-linecap="round">
-    <path d="M188 300c30-20 61-30 93-30" stroke-width="12" stroke-opacity=".4"/>
-    <path d="M166 342c22-14 44-21 67-21" stroke-width="9" stroke-opacity=".26"/>
+    <!-- Face. -->
+    <ellipse cx="466" cy="548" rx="27" ry="33" fill="#123055"/>
+    <ellipse cx="628" cy="548" rx="27" ry="33" fill="#123055"/>
+    <circle cx="458" cy="536" r="9" fill="#FFFFFF"/>
+    <circle cx="620" cy="536" r="9" fill="#FFFFFF"/>
+    <circle cx="474" cy="560" r="5" fill="#8FD8FF"/>
+    <circle cx="636" cy="560" r="5" fill="#8FD8FF"/>
+    <path d="M520 610c17 16 42 16 59 0" fill="none" stroke="#3A5A83" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cx="398" cy="606" rx="30" ry="17" fill="#F6B7C4" fill-opacity=".7"/>
+    <ellipse cx="694" cy="606" rx="30" ry="17" fill="#F6B7C4" fill-opacity=".7"/>
+
+    <!-- Maid headband with frills and a ribbon. -->
+    <path d="M356 322c44-58 112-90 189-90s145 32 189 90c-52-24-120-38-189-38s-137 14-189 38z" fill="url(#frill)"/>
+    <path d="M350 326c14-10 22-26 24-42 2 16-2 30 0 40 8-12 12-30 10-46 6 18 6 34 8 44 6-14 8-32 6-48 8 16 10 34 12 46 6-14 8-32 6-46 8 16 12 32 14 44 8-12 12-28 12-44 6 16 6 32 8 44 8-14 10-30 10-46 6 16 8 32 8 46 10-12 16-28 18-44 4 16 0 32-2 44 12-10 20-26 24-42 2 16-4 32-8 44 14-10 24-24 30-40 0 16-8 32-14 42 16-8 28-20 36-34-2 16-12 30-20 40 16-6 30-16 40-28-4 16-16 30-26 38 16-4 32-12 44-22-6 16-20 28-32 34 18-2 34-8 48-16-8 14-24 24-38 30z" fill="#F4FAFF" fill-opacity=".9"/>
+    <path d="M706 292c26-16 54-14 70 4 16 18 10 46-14 62-24 16-52 12-66-8-14-20-6-46 10-58z" fill="#2E6FE0"/>
+    <path d="M712 300c-18-14-40-22-58-20 6 16 20 30 40 38z" fill="#4C88F0"/>
+    <path d="M716 300c18-14 40-22 58-20-6 16-20 30-40 38z" fill="#4C88F0"/>
+    <circle cx="716" cy="312" r="14" fill="#1D51B8"/>
+
+    <!-- Apron with frilled hem and waist ribbon. -->
+    <path d="M520 620c96 0 176 30 206 92 28 58 8 118-52 150-42 22-96 34-154 34s-112-12-154-34c-60-32-80-92-52-150 30-62 110-92 206-92z" fill="url(#apron)"/>
+    <path d="M520 620c96 0 176 30 206 92 10 22 10 46 4 66-30-44-112-70-210-70s-180 26-210 70c-6-20-6-44 4-66 30-62 110-92 206-92z" fill="#FFFFFF" fill-opacity=".6"/>
+    <path d="M356 700c18 8 34 22 44 40 6-22 18-42 34-56 8 20 10 42 6 62 18-18 42-32 68-38-6 22-18 42-34 58 24-12 52-18 80-18s56 6 80 18c-16-16-28-36-34-58 26 6 50 20 68 38-4-20-2-42 6-62 16 14 28 34 34 56 10-18 26-32 44-40-14 34-38 62-70 78-42 22-96 34-128 34s-86-12-128-34c-32-16-56-44-70-78z" fill="#DCE9FA"/>
+    <path d="M520 640c26 0 48 10 48 30s-22 30-48 30-48-10-48-30 22-30 48-30z" fill="#2E6FE0"/>
+    <path d="M478 656c-22-6-42-2-52 12 12 10 30 14 48 10z" fill="#4C88F0"/>
+    <path d="M562 656c22-6 42-2 52 12-12 10-30 14-48 10z" fill="#4C88F0"/>
+    <circle cx="520" cy="668" r="12" fill="#1D51B8"/>
+
+    <!-- Rice bowl held at the front. -->
+    <path d="M404 800c4 42 44 70 116 70s112-28 116-70z" fill="#FFFFFF"/>
+    <path d="M404 800c4 42 44 70 116 70s112-28 116-70z" fill="none" stroke="#CBDEF6" stroke-width="6"/>
+    <path d="M414 812c14 22 50 38 106 38s92-16 106-38" fill="none" stroke="#2E6FE0" stroke-width="10" stroke-linecap="round"/>
+    <path d="M432 796c8-16 30-26 54-26 16 0 30 4 40 12 10-8 24-12 40-12 24 0 46 10 54 26z" fill="#FBF5E6"/>
+    <ellipse cx="492" cy="792" rx="14" ry="9" fill="#FFFFFF"/>
+    <ellipse cx="540" cy="788" rx="14" ry="9" fill="#FFFFFF"/>
+    <ellipse cx="584" cy="792" rx="14" ry="9" fill="#FFFFFF"/>
+
+    <!-- Highlights and warm request sparkle. -->
+    <path d="M410 380c22-30 52-48 88-54" fill="none" stroke="#FFFFFF" stroke-opacity=".85" stroke-width="14" stroke-linecap="round"/>
+    <path d="M846 210l8 22 22 8-22 8-8 22-8-22-22-8 22-8z" fill="#FFE9A8"/>
+    <path d="M770 150l5 13 13 5-13 5-5 13-5-13-13-5 13-5z" fill="#FFE9A8" fill-opacity=".8"/>
   </g>
 </svg>
