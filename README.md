@@ -17,7 +17,7 @@
 ![Windows 10+ x64](https://img.shields.io/badge/Windows-10%2B%20x64-426B9A)
 ![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-4C78A8)
 ![Magpie](https://img.shields.io/badge/Magpie-local%20integration-C7475C)
-![Version](https://img.shields.io/badge/version-0.1.5-4C78A8)
+![Version](https://img.shields.io/badge/version-0.1.6-4C78A8)
 ![Code MIT](https://img.shields.io/badge/code-MIT-538476)
 ![Artwork noncommercial](https://img.shields.io/badge/artwork-noncommercial-D19A35)
 
@@ -53,11 +53,11 @@
 
 ### 直接用 App（推荐）
 
-先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.5-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.5-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
+先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.6-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.6-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
 
 **Windows 10+ x64**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.5-Windows-x64.zip` 并解压。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.6-Windows-x64.zip` 并解压。
 2. 进入解压后的 `蓝色大肥鱼-win32-x64` 文件夹，双击 `BlueDaFeiYu.exe`。压缩包不含安装器，应用可从任意文件夹直接运行。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)。
 
@@ -67,7 +67,7 @@ Windows 版没有代码签名。若 SmartScreen 拦截，请先核对下载来�
 
 **macOS（Apple Silicon）**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.5-macOS-arm64.zip`。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.6-macOS-arm64.zip`。
 2. 解压后把「蓝色大肥鱼.app」拖进「应用程序」，再从菜单栏打开。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)，请求灯泡和额度会自动接入。
 
@@ -83,13 +83,13 @@ App 使用本地 ad-hoc 签名，没有 Apple Developer ID 签名或公证。若
 magpie plugin add github:wolfvoid/magpie-DaFeiYu
 ```
 
-安装后，Magpie 侧边栏会出现「蓝色大肥鱼」使用页。**页面不会自动安装或启动桌面 App**，桌面悬浮窗仍需按上面的说明下载对应系统的 ZIP。
+安装后，Magpie 侧边栏会出现「蓝色大肥鱼」使用页。**页面不会自动安装或启动桌面 App**，桌面悬浮窗仍需按上面的说明下载对应系统的 ZIP。页面是纯 HTML + CSS，右上角可切换中文 / EN，默认中文，不加载任何脚本。
 
 ### 开发与验证
 
 本地开发需要 Node.js 24+、npm 和 Git。构建、图标生成、素材下载、测试与应用打包都是 TypeScript 脚本（`npm run build` / `assets` / `package`，即 `node scripts/*.ts`），发布时也由 GitHub Actions 执行，不要求本地安装 Python 或其他语言的工具链。原生能力由 Zig 编写的 `native/src/petkit.zig` 提供，`zig build test` 纳入 CI。动画由 CI 从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。
 
-仓库里唯一被跟踪的 JavaScript 是 `magpie/page.js`：Magpie 宿主直接加载这段普通脚本，安装插件时不会运行构建，所以生成结果必须随仓库提供。它由 `src/magpie/page.ts` 生成，文件头注明来源，`npm run build` 会重写它，测试会在它与源码不一致时失败。
+仓库里没有 JavaScript 源文件或生成物：`magpie/` 只是静态 HTML + CSS，宿主按原样加载，不经过 `npm run build`。`tests/distribution.test.ts` 会扫描整个仓库，出现 `.js`/`.cjs`/`.mjs`/`.py`/`.ps1` 等禁用扩展名，或语言集合不再是 TypeScript + Zig 时就会失败；应用运行时所需的 `dist/*.cjs`、`dist/*.js` 只是 Electron 要求的构建产物，不入库。
 
 ## 一个仓库，两个平台
 

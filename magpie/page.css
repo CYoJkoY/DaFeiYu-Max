@@ -16,3 +16,14 @@ input { box-sizing: border-box; width: 100%; padding: 12px; margin-top: 8px; col
 .note, footer { font-size: 12px; opacity: .75; line-height: 1.8; }
 @media (max-width: 480px) { main { padding: 20px 14px; } header { gap: 14px; } header img { width: 64px; height: 64px; } h1 { font-size: 24px; } section { padding: 10px 16px; } }
 @media (max-width: 340px) { header { flex-direction: column; align-items: flex-start; } }
+
+/* Language switch without a script: two radios, sibling selectors. Chinese wins by default. */
+.lang-input { position: absolute; width: 1px; height: 1px; margin: -1px; opacity: 0; pointer-events: none; }
+.en { display: none; }
+#lang-en:checked ~ main .en { display: inline; }
+#lang-en:checked ~ main .zh { display: none; }
+.lang-switch { flex: none; margin-left: auto; display: inline-flex; gap: 2px; padding: 3px; border: 1px solid #7fa5bc55; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.lang-switch label { padding: 4px 12px; border-radius: 999px; cursor: pointer; opacity: .6; }
+#lang-zh:checked ~ main label[for="lang-zh"], #lang-en:checked ~ main label[for="lang-en"] { background: #2f6fe0; color: #fff; opacity: 1; }
+#lang-zh:focus-visible ~ main label[for="lang-zh"], #lang-en:focus-visible ~ main label[for="lang-en"] { outline: 2px solid #2f6fe0; outline-offset: 2px; }
+@media (max-width: 480px) { .lang-switch { align-self: flex-start; } }

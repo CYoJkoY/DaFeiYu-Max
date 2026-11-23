@@ -14,7 +14,7 @@
 
 - npm 脚本两个平台一致：`npm run build`、`npm test`、`npm run check`、`npm start`。
 - 工具链只用 TypeScript（`node scripts/*.ts`）与 Zig；不要引入 Python、`.mjs`/`.cjs` 源脚本等额外语言。构建产物里的 `.cjs` 仅是 Electron 主进程/预加载的运行时格式，不是源码。
-- 唯一被跟踪的 JavaScript 是 `magpie/page.js`：Magpie 宿主只加载普通脚本且安装插件时不构建，所以生成结果必须入库；它由 `src/magpie/page.ts` 经 `scripts/lib/magpie-page.ts` 生成，文件头注明来源，`tests/distribution.test.ts` 在内容漂移时失败。不要手改它。
+- 仓库不保留任何 JavaScript 源文件或生成物：Magpie 页面是纯 HTML + CSS（`magpie/index.html`、`magpie/page.css`），语言用单选按钮配合 CSS 切换，默认中文；宿主直接加载这些静态文件，不参与打包，也不要再引入脚本。`tests/distribution.test.ts` 会扫描全仓库，出现 `.js`/`.cjs`/`.mjs`/`.py`/`.ps1` 等禁用扩展名，或语言集合不再是 TypeScript + Zig，都会失败。
 - 冒烟测试：`npm start -- --smoke-test`；产物写入 `DAFEIYU_QA_DIR` 或应用 userData 的 `qa/`，不写入应用安装目录，也不提交进仓库。
 
 ## 发布与安装约定
