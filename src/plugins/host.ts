@@ -1,10 +1,10 @@
 import type {
   Catalog, FestivalView, PetSettings, PluginSnapshot, PluginViewEntry, Theme,
-} from '../core/types.js';
-import { applyAppearance } from './appearance.js';
-import { festivalActive } from './calendar.js';
-import { manifestLabel } from './manifest.js';
-import type { PluginRegistry } from './registry.js';
+} from '../core/types.ts';
+import { applyAppearance } from './appearance.ts';
+import { festivalActive } from './calendar.ts';
+import { manifestLabel } from './manifest.ts';
+import type { PluginRegistry } from './registry.ts';
 
 export interface ResolvedPlugins {
   /** Catalog with the selected appearance patch already merged in. */

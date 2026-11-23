@@ -4,20 +4,20 @@ import {
 } from 'electron';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { clampPetPosition } from './core/position.js';
-import { mergeCachedQuota } from './core/magpie-cache.js';
-import { magpieAppCandidates } from './core/platform.js';
-import { ActivityReader, readQuota } from './core/magpie.js';
-import { PET_SIZES, normalizeSettings, sanitizeHiddenQuotas, sanitizeInterests, type PetSize } from './core/settings.js';
-import { NativeCore, tsActivityState } from './core/native.js';
-import { PLATFORM_IDS } from './social/registry.js';
-import { CredentialVault } from './social/vault.js';
-import { SocialEngine } from './social/engine.js';
-import { PluginRegistry } from './plugins/registry.js';
-import { resolvePlugins } from './plugins/host.js';
+import { clampPetPosition } from './core/position.ts';
+import { mergeCachedQuota } from './core/magpie-cache.ts';
+import { magpieAppCandidates } from './core/platform.ts';
+import { ActivityReader, readQuota } from './core/magpie.ts';
+import { PET_SIZES, normalizeSettings, sanitizeHiddenQuotas, sanitizeInterests, type PetSize } from './core/settings.ts';
+import { NativeCore, tsActivityState } from './core/native.ts';
+import { PLATFORM_IDS } from './social/registry.ts';
+import { CredentialVault } from './social/vault.ts';
+import { SocialEngine } from './social/engine.ts';
+import { PluginRegistry } from './plugins/registry.ts';
+import { resolvePlugins } from './plugins/host.ts';
 import type {
   Activity, Catalog, PetSettings, PluginSnapshot, Point, Quota, SocialReport, Theme,
-} from './core/types.js';
+} from './core/types.ts';
 
 const smoke = process.argv.includes('--smoke-test');
 app.setName('蓝色大肥鱼');

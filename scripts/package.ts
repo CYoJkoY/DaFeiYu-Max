@@ -1,3 +1,9 @@
+/**
+ * Pack the Electron runtime for macOS (arm64) or Windows (x64).
+ *
+ * The Windows artefact is a portable ZIP produced by `scripts/lib/zip.ts`, so
+ * packaging needs nothing beyond Node and the npm dependencies.
+ */
 import { packager } from '@electron/packager';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -5,21 +11,49 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { writeZipFromDirectory } from './lib/zip.ts';
 
 export const APP_NAME = '蓝色大肥鱼';
 export const EXECUTABLE_NAME = 'BlueDaFeiYu';
 export const APP_BUNDLE_ID = 'local.blue-dafeiyu.codex';
-export const SUPPORTED_TARGETS = { darwin: ['arm64'], win32: ['x64'] };
+export const SUPPORTED_TARGETS: Record<string, readonly string[]> = { darwin: ['arm64'], win32: ['x64'] };
+
+export interface Target {
+  platform: string;
+  arch: string;
+}
+
+export interface CliArgs {
+  help?: boolean;
+  platform?: string;
+  arch?: string;
+}
+
+interface Metadata {
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  license: string;
+  devDependencies: { electron: string };
+}
+
+interface UpstreamManifest {
+  files: Array<{ name: string; sha: string; size: number }>;
+}
+
+type PackagerOptions = NonNullable<Parameters<typeof packager>[0]>;
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
-function usageText() {
+function usageText(): string {
   return [
-    'Usage: node scripts/package.mjs [--platform darwin|win32] [--arch arm64|x64]',
+    'Usage: node scripts/package.ts [--platform darwin|win32] [--arch arm64|x64]',
     `Defaults: current platform (${process.platform}); darwin defaults to arm64, win32 to x64.`,
   ].join('\n');
 }
-export function parseCliArgs(argv = process.argv.slice(2)) {
+
+export function parseCliArgs(argv: string[] = process.argv.slice(2)): CliArgs {
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(usageText());
     return { help: true };
@@ -38,44 +72,44 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
   return { platform: values.platform, arch: values.arch };
 }
 
-export function resolveTarget({ platform = process.platform, arch } = {}) {
+export function resolveTarget({ platform = process.platform, arch }: { platform?: string; arch?: string } = {}): Target {
   const resolved = {
     platform,
     arch: arch ?? (platform === 'darwin' ? 'arm64' : platform === 'win32' ? 'x64' : process.arch),
   };
-  if (!SUPPORTED_TARGETS[resolved.platform]?.includes(resolved.arch)) {
+  if (!SUPPORTED_TARGETS[platform]?.includes(resolved.arch)) {
     const supported = Object.entries(SUPPORTED_TARGETS).map(([name, arches]) => `${name} ${arches.join('/')}`).join(', ');
     throw new Error(`Unsupported package target ${resolved.platform}/${resolved.arch}; supported: ${supported}`);
   }
   return resolved;
 }
 
-export function iconPathFor(platform, base = root) {
-  const name = { darwin: 'app-icon.icns', win32: 'app-icon.ico' }[platform];
+export function iconPathFor(platform: string, base: string = root): string {
+  const name = ({ darwin: 'app-icon.icns', win32: 'app-icon.ico' } as Record<string, string | undefined>)[platform];
   if (!name) throw new Error(`No app icon convention for platform ${platform}`);
   return join(base, 'assets', name);
 }
 
 // cpSync filters receive platform-native separators, so normalize before comparing.
-export function isVendorPath(source) {
+export function isVendorPath(source: string): boolean {
   const normalized = String(source).replaceAll('\\', '/');
   return normalized === 'vendor' || normalized.endsWith('/vendor');
 }
 
 // Zig emits a .pdb next to the Windows sidecar; debug symbols do not belong in
 // a shipped release.
-export function isDebugSymbol(source) {
+export function isDebugSymbol(source: string): boolean {
   return String(source).toLowerCase().endsWith('.pdb');
 }
 
-function trimLocales(resources) {
+function trimLocales(resources: string): void {
   const keep = ['en.lproj', 'en_US.lproj', 'en_GB.lproj', 'zh_CN.lproj', 'zh_TW.lproj'];
   for (const entry of readdirSync(resources)) {
     if (entry.endsWith('.lproj') && !keep.includes(entry)) rmSync(join(resources, entry), { recursive: true });
   }
 }
 
-function postProcessDarwin(bundle) {
+function postProcessDarwin(bundle: string): void {
   for (const resources of [
     join(bundle, 'Contents/Resources'),
     join(bundle, 'Contents/Frameworks/Electron Framework.framework/Versions/A/Resources'),
@@ -87,14 +121,14 @@ function postProcessDarwin(bundle) {
   }
 }
 
-function windowsZipName(version) {
+export function windowsZipName(version: string): string {
   return `magpie-DaFeiYu-v${version}-Windows-x64.zip`;
 }
 
-async function packageTarget(metadata, staging, target) {
+async function packageTarget(metadata: Metadata, staging: string, target: Target): Promise<string[]> {
   const icon = iconPathFor(target.platform);
   if (!existsSync(icon)) throw new Error(`Missing ${target.platform} app icon: ${icon}`);
-  const paths = await packager({
+  const options: PackagerOptions = {
     dir: staging,
     out: join(root, 'dist'),
     name: APP_NAME,
@@ -102,8 +136,8 @@ async function packageTarget(metadata, staging, target) {
     icon,
     appBundleId: APP_BUNDLE_ID,
     appVersion: metadata.version,
-    platform: target.platform,
-    arch: target.arch,
+    platform: target.platform as PackagerOptions['platform'],
+    arch: target.arch as PackagerOptions['arch'],
     electronVersion: metadata.devDependencies.electron,
     electronZipDir: process.env.ELECTRON_ZIP_DIR,
     asar: false,
@@ -112,8 +146,9 @@ async function packageTarget(metadata, staging, target) {
     ...(target.platform === 'darwin' ? {
       extendInfo: { LSUIElement: true, NSHighResolutionCapable: true, CFBundleDisplayName: APP_NAME },
     } : {}),
-  });
-  const artifacts = [];
+  };
+  const paths = await packager(options);
+  const artifacts: string[] = [];
   for (const output of paths) {
     if (target.platform === 'darwin') {
       postProcessDarwin(join(output, `${APP_NAME}.app`));
@@ -121,20 +156,19 @@ async function packageTarget(metadata, staging, target) {
     } else {
       // Portable Windows distribution: unzip and run the application directly.
       const zip = join(root, 'dist', windowsZipName(metadata.version));
-      execFileSync(process.platform === 'win32' ? 'python' : 'python3',
-        [join(root, 'scripts', 'windows', 'archive.py'), output, zip], { stdio: 'inherit' });
+      writeZipFromDirectory(output, zip);
       artifacts.push(zip);
     }
   }
   return artifacts;
 }
 
-async function main() {
+async function main(): Promise<void> {
   const args = parseCliArgs();
   if (args.help) return;
   const target = resolveTarget(args);
-  const metadata = JSON.parse(readFileSync(join(root, 'package.json')));
-  const manifest = JSON.parse(readFileSync(join(root, 'assets/upstream.json')));
+  const metadata = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as Metadata;
+  const manifest = JSON.parse(readFileSync(join(root, 'assets/upstream.json'), 'utf8')) as UpstreamManifest;
   for (const entry of manifest.files) {
     const data = readFileSync(join(root, 'assets/webm', entry.name));
     const digest = createHash('sha1').update(`blob ${data.length}\0`).update(data).digest('hex');
@@ -150,7 +184,7 @@ async function main() {
     const runtimeEntries = [
       'main.cjs', 'preload.cjs', 'pet.js', 'panel.js',
       'pet.html', 'pet.css', 'panel.html', 'panel.css',
-      'core', 'native',
+      'native',
     ];
     mkdirSync(join(staging, 'dist'), { recursive: true });
     for (const entry of runtimeEntries) {

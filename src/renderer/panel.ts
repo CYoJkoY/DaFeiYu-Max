@@ -2,11 +2,11 @@
  * The companion panel: quota detail, animation browser, pet settings, interest
  * keywords and the social window (read digest, bridge configuration, drafts).
  */
-import { quotaEntries } from '../core/quota-display.js';
-import { providerIconSource, providerInitial } from '../core/provider-icons.js';
+import { quotaEntries } from '../core/quota-display.ts';
+import { providerIconSource, providerInitial } from '../core/provider-icons.ts';
 import type {
   Activity, Catalog, CatalogUpdate, PetSettings, PluginSnapshot, Quota, SocialReport, Theme,
-} from '../core/types.js';
+} from '../core/types.ts';
 
 const api = window.pet;
 let catalog: Catalog;

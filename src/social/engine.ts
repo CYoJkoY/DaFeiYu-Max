@@ -1,15 +1,15 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { PetSettings, SocialDraft, SocialPlatformStatus, SocialReport } from '../core/types.js';
-import { sanitizeBridgeUrl } from '../core/settings.js';
-import { SOCIAL_PLATFORMS, platformDescriptor, platformLabel } from './registry.js';
-import { buildDigest } from './digest.js';
-import { dedupeKey, evaluateWrite, sanitizeText } from './policy.js';
-import type { ReadContext, SocialAdapter, SocialItem } from './types.js';
-import { bilibiliAdapter } from './adapters/bilibili.js';
-import { tiebaAdapter } from './adapters/tieba.js';
-import { douyinAdapter, xiaoheiheAdapter } from './adapters/bridged.js';
-import type { CredentialVault } from './vault.js';
+import type { PetSettings, SocialDraft, SocialPlatformStatus, SocialReport } from '../core/types.ts';
+import { sanitizeBridgeUrl } from '../core/settings.ts';
+import { SOCIAL_PLATFORMS, platformDescriptor, platformLabel } from './registry.ts';
+import { buildDigest } from './digest.ts';
+import { dedupeKey, evaluateWrite, sanitizeText } from './policy.ts';
+import type { ReadContext, SocialAdapter, SocialItem } from './types.ts';
+import { bilibiliAdapter } from './adapters/bilibili.ts';
+import { tiebaAdapter } from './adapters/tieba.ts';
+import { douyinAdapter, xiaoheiheAdapter } from './adapters/bridged.ts';
+import type { CredentialVault } from './vault.ts';
 
 const ADAPTERS: Record<string, SocialAdapter> = {
   bilibili: bilibiliAdapter,

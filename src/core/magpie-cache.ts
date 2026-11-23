@@ -1,4 +1,4 @@
-import type { Quota } from './types.js';
+import type { Quota } from './types.ts';
 
 /**
  * Keep the last usable quota values when a refresh fails, so the pet's badges

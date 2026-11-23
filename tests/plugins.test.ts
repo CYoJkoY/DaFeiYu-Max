@@ -8,15 +8,15 @@ import {
   SOCIAL_PLATFORM_MAPPING,
   manifestLabel,
   parsePluginManifest,
-} from '../dist/core/plugin-manifest.js';
-import { festivalActive, inMonthDayWindow, monthDay } from '../dist/core/plugin-calendar.js';
-import { applyAppearance } from '../dist/core/plugin-appearance.js';
-import { PluginRegistry } from '../dist/core/plugin-registry.js';
-import { prunePluginSelections, resolvePlugins } from '../dist/core/plugin-host.js';
-import { builtinPlugins } from '../dist/core/plugin-builtin.js';
-import { DEFAULT_SETTINGS } from '../dist/core/settings.js';
+} from '../src/plugins/manifest.ts';
+import { festivalActive, inMonthDayWindow, monthDay } from '../src/plugins/calendar.ts';
+import { applyAppearance } from '../src/plugins/appearance.ts';
+import { PluginRegistry } from '../src/plugins/registry.ts';
+import { prunePluginSelections, resolvePlugins } from '../src/plugins/host.ts';
+import { builtinPlugins } from '../src/plugins/builtin.ts';
+import { DEFAULT_SETTINGS } from '../src/core/settings.ts';
 
-const socialBase = {
+const socialBase: Record<string, unknown> = {
   schemaVersion: PLUGIN_SCHEMA_VERSION,
   id: 'bilibili-popular',
   version: '1.0.0',
@@ -26,7 +26,7 @@ const socialBase = {
   social: { implementation: 'bilibili', platform: 'bilibili', requires: 'none', reads: true, writes: false },
 };
 
-const appearanceBase = {
+const appearanceBase: Record<string, unknown> = {
   schemaVersion: PLUGIN_SCHEMA_VERSION,
   id: 'night-skin',
   version: '2.3.7-beta.1',
@@ -36,7 +36,7 @@ const appearanceBase = {
   appearance: { accent: '#123', idle: ['idle-a'] },
 };
 
-const festivalBase = {
+const festivalBase: Record<string, unknown> = {
   schemaVersion: PLUGIN_SCHEMA_VERSION,
   id: 'new-year',
   version: '1.0.0',
@@ -48,11 +48,11 @@ const festivalBase = {
   },
 };
 
-function validManifest(base = socialBase, changes = {}) {
+function validManifest(base: Record<string, unknown> = socialBase, changes: Record<string, unknown> = {}) {
   return structuredClone({ ...base, ...changes });
 }
 
-function settings(plugins = {}) {
+function settings(plugins: Record<string, unknown> = {}) {
   const result = structuredClone(DEFAULT_SETTINGS);
   result.plugins = { appearance: null, enabled: {}, ...plugins };
   return result;

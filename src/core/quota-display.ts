@@ -1,4 +1,4 @@
-import type { Activity, Quota, QuotaAccount, QuotaEntry, QuotaWindow } from './types.js';
+import type { Activity, Quota, QuotaAccount, QuotaEntry, QuotaWindow } from './types.ts';
 
 function activeIds(activity: Activity | null | undefined, now: number): Set<string> {
   return new Set(

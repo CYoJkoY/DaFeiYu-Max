@@ -1,4 +1,4 @@
-import type { Activity, Catalog } from './types.js';
+import type { Activity, Catalog } from './types.ts';
 
 export type Random = () => number;
 

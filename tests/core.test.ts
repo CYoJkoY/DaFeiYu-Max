@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ActivityReader, chooseActivity, normalizeCards, readQuota, readLocal, resolveKey, activeAccountsForRoute } from '../dist/core/magpie.js';
-import { accountPercentages, compactQuotaLabel, quotaEntries } from '../dist/core/quota-display.js';
-import { clampPetPosition } from '../dist/core/position.js';
-import { AnimationDirector } from '../dist/core/animation.js';
-import { mergeCachedQuota } from '../dist/core/magpie-cache.js';
+import { ActivityReader, chooseActivity, normalizeCards, readQuota, readLocal, resolveKey, activeAccountsForRoute } from '../src/core/magpie.ts';
+import { accountPercentages, compactQuotaLabel, quotaEntries } from '../src/core/quota-display.ts';
+import { clampPetPosition } from '../src/core/position.ts';
+import { AnimationDirector } from '../src/core/animation.ts';
+import { mergeCachedQuota } from '../src/core/magpie-cache.ts';
 
 const now = 1800000000000;
-const catalog = JSON.parse(readFileSync(new URL('../assets/catalog.json', import.meta.url)));
+const catalog = JSON.parse(readFileSync(new URL('../assets/catalog.json', import.meta.url), 'utf8'));
 const concurrency = { object: 'concurrency', requests: 0, waiting: 0, tools: 0 };
 const cards = { data: [{ name: 'Provider', plan: 'plus', user: 'PRIVATE', readAt: new Date(now).toISOString(),
   windows: [{ name: '7 days', used: 25, resetsAt: new Date(now + 60000).toISOString() }] }] };

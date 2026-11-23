@@ -1,4 +1,4 @@
-import type { SocialPlatformId } from './types.js';
+import type { SocialPlatformId } from './types.ts';
 
 export interface PlatformDescriptor {
   id: SocialPlatformId;

@@ -1,4 +1,4 @@
-import type { PetSettings, PlatformSettings, PluginSettings, SocialSettings } from './types.js';
+import type { PetSettings, PlatformSettings, PluginSettings, SocialSettings } from './types.ts';
 
 export const PET_SIZES = [360, 460, 560] as const;
 export type PetSize = (typeof PET_SIZES)[number];

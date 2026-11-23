@@ -1,8 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { ActivityReader, readQuota } from '../dist/core/magpie.js';
+import { ActivityReader, readQuota } from '../src/core/magpie.ts';
 
-const manifest = JSON.parse(readFileSync(new URL('../assets/upstream.json', import.meta.url)));
+interface UpstreamManifest {
+  files: Array<{ name: string; sha: string }>;
+}
+
+const manifest = JSON.parse(readFileSync(new URL('../assets/upstream.json', import.meta.url), 'utf8')) as UpstreamManifest;
 for (const entry of manifest.files) {
   const data = readFileSync(new URL('../assets/webm/' + encodeURIComponent(entry.name), import.meta.url));
   const hash = createHash('sha1').update(`blob ${data.length}\0`).update(data).digest('hex');

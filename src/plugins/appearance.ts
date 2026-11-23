@@ -1,5 +1,5 @@
-import type { Catalog } from '../core/types.js';
-import type { AppearancePluginSpec } from './manifest.js';
+import type { Catalog } from '../core/types.ts';
+import type { AppearancePluginSpec } from './manifest.ts';
 
 /**
  * Merge a declarative appearance patch over a catalog, keeping only clip names

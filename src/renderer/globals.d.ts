@@ -5,7 +5,7 @@
  */
 import type {
   Activity, Catalog, CatalogUpdate, PetSettings, PluginSnapshot, Quota, SocialReport, Snapshot, Theme,
-} from '../core/types.js';
+} from '../core/types.ts';
 
 export interface PetApi {
   getSnapshot(): Promise<Snapshot>;

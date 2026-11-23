@@ -1,8 +1,18 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { parse } from 'jsonc-parser';
 
-const source = parse(readFileSync(new URL('../assets/upstream-config.jsonc', import.meta.url), 'utf8'));
-const manifest = JSON.parse(readFileSync(new URL('../assets/upstream.json', import.meta.url), 'utf8'));
+interface Animations {
+  idle: string[];
+  clicks: string[];
+  categories: Array<{ id: string; weight: number; actions: string[] }>;
+}
+
+interface UpstreamManifest {
+  files: Array<{ name: string; path: string; sha: string; size: number }>;
+}
+
+const source = parse(readFileSync(new URL('../assets/upstream-config.jsonc', import.meta.url), 'utf8')) as { animations: Animations };
+const manifest = JSON.parse(readFileSync(new URL('../assets/upstream.json', import.meta.url), 'utf8')) as UpstreamManifest;
 const names = manifest.files.map(entry => entry.name.replace(/\.webm$/, ''));
 const config = {
   names,
