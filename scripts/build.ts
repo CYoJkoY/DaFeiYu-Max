@@ -6,10 +6,11 @@
 //
 // Tests load src/**/*.ts directly through Node's type stripping, so this script
 // no longer emits an extra module tree for them.
-import { build, transform } from 'esbuild';
+import { build } from 'esbuild';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { compileMagpiePage, MAGPIE_PAGE_OUTPUT, MAGPIE_PAGE_SOURCE } from './lib/magpie-page.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const metadata = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { version: string };
@@ -62,15 +63,11 @@ for (const name of ['pet.html', 'pet.css', 'panel.html', 'panel.css']) {
   cpSync(join(root, 'src', name), join(root, 'dist', name));
 }
 
-// The Magpie plug-in host loads a classic script, so keep it free of module
-// syntax. `magpie/page.js` is generated from `src/magpie/page.ts` and committed
-// so `magpie plugin add github:...` can serve it without a build step; the
+// `magpie/page.js` is generated from `src/magpie/page.ts` and committed so
+// `magpie plugin add github:...` can serve it without a build step; the
 // distribution test fails if the committed copy drifts from this output.
-const page = readFileSync(join(root, 'src/magpie/page.ts'), 'utf8');
-// Keep CJK literals readable in the generated page; esbuild would otherwise
-// escape them and the distribution test matches them as raw text.
-const compiled = await transform(page, { loader: 'ts', target: 'es2020', format: 'esm', charset: 'utf8' });
-writeFileSync(join(root, 'magpie/page.js'), compiled.code.trimEnd() + '\n');
+const page = readFileSync(join(root, MAGPIE_PAGE_SOURCE), 'utf8');
+writeFileSync(join(root, MAGPIE_PAGE_OUTPUT), await compileMagpiePage(page));
 
 // Ship the Zig sidecar. `zig build` writes to native/zig-out/bin; native/bin is
 // kept as a fallback for pre-built binaries dropped in by hand.

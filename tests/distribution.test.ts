@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { compileMagpiePage } from '../scripts/lib/magpie-page.ts';
 
 const root = new URL('../', import.meta.url);
 const metadata = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
@@ -22,3 +23,12 @@ test('Magpie discovers a committed page rather than loading Electron in its plug
   assert.ok(!/fetch\(|XMLHttpRequest|WebSocket/.test(script));
   assert.ok(page.includes('https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest'));
 });
+
+test('the committed Magpie page script is generated output, not edited by hand', async () => {
+  const source = readFileSync(new URL('src/magpie/page.ts', root), 'utf8');
+  const expected = await compileMagpiePage(source);
+  const actual = readFileSync(new URL('magpie/page.js', root), 'utf8');
+  assert.equal(actual, expected, 'run `npm run build` to regenerate magpie/page.js');
+  assert.match(actual.split('\n')[0], /^\/\/ Generated from src\/magpie\/page\.ts/);
+});
+

@@ -1,3 +1,4 @@
+// Generated from src/magpie/page.ts by scripts/build.ts. Do not edit by hand.
 const zh = {
   title: "蓝色大肥鱼桌宠",
   tagline: "把 Magpie 的实时状态，变成桌边的陪伴。",
