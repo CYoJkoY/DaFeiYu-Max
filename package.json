@@ -1,7 +1,7 @@
 {
   "name": "magpie-dafeiyu",
   "type": "module",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Magpie page for the DaFeiYu desktop pet (a separate app you download). Request bulbs, quota percentages and API balances for Windows and macOS. Artwork from PC2005-cloud/dsh-pet, non-commercial.",
   "repository": {
     "type": "git",

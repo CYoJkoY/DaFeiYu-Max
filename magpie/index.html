@@ -1,54 +1,59 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>DaFeiYu · Magpie</title>
+  <title>蓝色大肥鱼 · DaFeiYu — Magpie</title>
   <link rel="stylesheet" href="page.css">
-  <script src="_magpie/bridge.js"></script>
 </head>
 <body>
+  <!-- 纯 HTML + CSS：没有脚本。语言用单选按钮 + 相邻选择器切换，默认中文。 -->
+  <input class="lang-input" type="radio" name="lang" id="lang-zh" checked>
+  <input class="lang-input" type="radio" name="lang" id="lang-en">
   <main>
     <header>
       <img src="icon.png" width="88" height="88" alt="">
       <div>
         <p class="eyebrow">WINDOWS · MACOS × MAGPIE</p>
-        <h1 data-i18n="title">DaFeiYu desktop pet</h1>
-        <p data-i18n="tagline">Magpie's live status, as a companion on your desktop.</p>
+        <h1><span class="zh">蓝色大肥鱼桌宠</span><span class="en" lang="en">DaFeiYu desktop pet</span></h1>
+        <p><span class="zh">把 Magpie 的实时状态，变成桌边的陪伴。</span><span class="en" lang="en">Magpie's live status, as a companion on your desktop.</span></p>
+      </div>
+      <div class="lang-switch" role="group" aria-label="语言 / Language">
+        <label for="lang-zh">中文</label>
+        <label for="lang-en" lang="en">EN</label>
       </div>
     </header>
     <section class="notice">
-      <h2 data-i18n="noticeTitle">This page is only a guide</h2>
-      <p data-i18n="notice">The desktop pet is a separate app that you download yourself. Installing this plugin does not install, download or start the app.</p>
+      <h2><span class="zh">本页只是使用指南</span><span class="en" lang="en">This page is only a guide</span></h2>
+      <p><span class="zh">桌宠是需要另外下载的独立 App。安装这个插件不会安装、下载或启动它。</span><span class="en" lang="en">The desktop pet is a separate app that you download yourself. Installing this plugin does not install, download or start the app.</span></p>
     </section>
     <section>
-      <h2 data-i18n="featuresTitle">What the app shows</h2>
+      <h2><span class="zh">App 能显示什么</span><span class="en" lang="en">What the app shows</span></h2>
       <ul>
-        <li data-i18n="feature1">One bulb per request in progress.</li>
-        <li data-i18n="feature2">Quota percentages for subscriptions and balances for API wallets, each with its own switch.</li>
-        <li data-i18n="feature3">106 transparent animations; drag it to a screen edge.</li>
+        <li><span class="zh">几个进行中的请求，就亮几盏灯。</span><span class="en" lang="en">One bulb per request in progress.</span></li>
+        <li><span class="zh">订阅显示额度百分比，API 钱包显示余额，每一项都能单独开关。</span><span class="en" lang="en">Quota percentages for subscriptions and balances for API wallets, each with its own switch.</span></li>
+        <li><span class="zh">106 段透明动画，可拖到屏幕边缘。</span><span class="en" lang="en">106 transparent animations; drag it to a screen edge.</span></li>
       </ul>
     </section>
     <section>
-      <h2 data-i18n="installTitle">Install the app</h2>
+      <h2><span class="zh">安装桌面 App</span><span class="en" lang="en">Install the app</span></h2>
       <ol>
-        <li data-i18n="step1">Open the release page in your browser and download the ZIP for your system: Windows 10+ x64, or Apple Silicon Mac with macOS 12+.</li>
-        <li data-i18n="step2">macOS: unzip and drag the app to Applications. Windows: unzip and run BlueDaFeiYu.exe from any folder.</li>
-        <li data-i18n="step3">Start the app while Magpie runs on this computer.</li>
+        <li><span class="zh">在浏览器中打开发布页，下载与系统匹配的压缩包：Windows 10+ x64，或 macOS 12+ 的 Apple Silicon Mac。</span><span class="en" lang="en">Open the release page in your browser and download the ZIP for your system: Windows 10+ x64, or Apple Silicon Mac with macOS 12+.</span></li>
+        <li><span class="zh">macOS：解压后把 App 拖入「应用程序」。Windows：解压后直接运行 BlueDaFeiYu.exe，压缩包不含安装器。</span><span class="en" lang="en">macOS: unzip and drag the app to Applications. Windows: unzip and run BlueDaFeiYu.exe directly; the ZIP has no installer.</span></li>
+        <li><span class="zh">在本机 Magpie 运行时启动 App。</span><span class="en" lang="en">Start the app while Magpie runs on this computer.</span></li>
       </ol>
-      <label for="download" data-i18n="downloadLabel">Release page (select and copy)</label>
+      <label for="download"><span class="zh">发布页地址（选中后复制）</span><span class="en" lang="en">Release page (select and copy)</span></label>
       <input id="download" readonly value="https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest">
-      <p class="note" data-i18n="signing">The macOS build is ad-hoc signed only, not notarized; the Windows build is unsigned. Check the source before opening it the first time.</p>
+      <p class="note"><span class="zh">macOS 版仅 ad-hoc 签名，未公证；Windows 版未签名。首次打开前请先核对来源。</span><span class="en" lang="en">The macOS build is ad-hoc signed only, not notarized; the Windows build is unsigned. Check the source before opening it the first time.</span></p>
     </section>
     <section>
-      <h2 data-i18n="privacyTitle">How it talks to Magpie</h2>
-      <p data-i18n="privacy">The app reads Magpie on this computer only (127.0.0.1): request status every 2 seconds, quota cards every 30 seconds. It sends the token magpie-dafeiyu, or MAGPIE_API_KEY when you set one. This page reads nothing.</p>
+      <h2><span class="zh">它如何读取 Magpie</span><span class="en" lang="en">How it talks to Magpie</span></h2>
+      <p><span class="zh">App 只读取本机 Magpie（127.0.0.1）：请求状态每 2 秒一次，额度卡片每 30 秒一次。请求时带上 magpie-dafeiyu，若设置了 MAGPIE_API_KEY 则带上它。本页不读取任何数据。</span><span class="en" lang="en">The app reads Magpie on this computer only (127.0.0.1): request status every 2 seconds, quota cards every 30 seconds. It sends the token magpie-dafeiyu, or MAGPIE_API_KEY when you set one. This page reads nothing.</span></p>
     </section>
     <footer>
-      <p data-i18n="credits">Character and animations: PC2005-cloud/dsh-pet, non-commercial use only. Gateway: yetone/magpie.</p>
-      <p data-i18n="unofficial">An independent community project, not an official Magpie plugin.</p>
+      <p><span class="zh">角色与动画：PC2005-cloud/dsh-pet，仅限非商用。网关：yetone/magpie。</span><span class="en" lang="en">Character and animations: PC2005-cloud/dsh-pet, non-commercial use only. Gateway: yetone/magpie.</span></p>
+      <p><span class="zh">独立社区项目，非 Magpie 官方插件。</span><span class="en" lang="en">An independent community project, not an official Magpie plugin.</span></p>
     </footer>
   </main>
-  <script src="page.js"></script>
 </body>
 </html>
