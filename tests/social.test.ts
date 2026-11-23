@@ -1,16 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDigest, rankItems } from '../dist/core/social-digest.js';
-import { dedupeKey, evaluateWrite, inQuietHours, isAllowedTarget, sanitizeText, WRITE_LIMITS } from '../dist/core/social-policy.js';
-import { parseBridgeFeed } from '../dist/core/social-bridged.js';
-import { parseTiebaThreads } from '../dist/core/social-tieba.js';
-import { parseBilibiliPopular } from '../dist/core/social-bilibili.js';
-import { PLATFORM_IDS, platformLabel } from '../dist/core/social-registry.js';
+import { buildDigest, rankItems } from '../src/social/digest.ts';
+import { dedupeKey, evaluateWrite, inQuietHours, isAllowedTarget, sanitizeText, WRITE_LIMITS } from '../src/social/policy.ts';
+import type { PolicyInput } from '../src/social/policy.ts';
+import { parseBridgeFeed } from '../src/social/adapters/bridged.ts';
+import { parseTiebaThreads } from '../src/social/adapters/tieba.ts';
+import { parseBilibiliPopular } from '../src/social/adapters/bilibili.ts';
+import { PLATFORM_IDS, platformLabel } from '../src/social/registry.ts';
+import type { SocialItem } from '../src/social/types.ts';
 
 // Quiet hours are local wall-clock hours, so the fixture must be a local time.
 const now = new Date(2026, 10, 23, 12).getTime();
-const at = (title, extra = {}) => ({ id: title, platform: 'bilibili', kind: 'video', title, ...extra });
-const base = {
+const at = (title: string, extra: Partial<SocialItem> = {}): SocialItem =>
+  ({ id: title, platform: 'bilibili', kind: 'video', title, ...extra });
+const base: PolicyInput = {
   platform: 'bilibili',
   target: 'BV1xx411c7mD',
   text: '  这期讲得清楚，收藏了。 ',

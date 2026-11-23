@@ -1,10 +1,16 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const { readFileSync, mkdirSync, writeFileSync, mkdtempSync, rmSync } = require('node:fs');
-const path = require('node:path');
-const { tmpdir } = require('node:os');
+/**
+ * Render the quota panel with synthetic data and save `qa/panel.png`. Run with
+ * `electron` (compiled to `dist/tools/capture-panel-demo.cjs` by
+ * `scripts/build.ts`).
+ */
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import * as path from 'node:path';
 
-const root = path.join(__dirname, '..');
-const profile = mkdtempSync(path.join(tmpdir(), 'dafeiyu-panel-demo-'));
+// Compiled output lives in dist/tools/, so the repository root is two levels up.
+const root = path.join(__dirname, '..', '..');
+const profile = mkdtempSync(path.join(tmpdir(), 'dafeiyu-'));
 app.setPath('userData', profile);
 const catalog = JSON.parse(readFileSync(path.join(root, 'assets/catalog.json'), 'utf8'));
 const now = Date.now();
@@ -38,6 +44,6 @@ app.whenReady().then(async () => {
   writeFileSync(path.join(output, 'panel.png'), (await window.webContents.capturePage()).toPNG());
   console.log('Saved qa/panel.png using synthetic quota data.');
   app.quit();
-}).catch(error => { console.error(error); app.exit(1); });
+}).catch((error: unknown) => { console.error(error); app.exit(1); });
 
 app.on('will-quit', () => rmSync(profile, { recursive: true, force: true }));

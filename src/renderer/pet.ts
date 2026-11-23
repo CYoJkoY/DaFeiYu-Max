@@ -2,10 +2,10 @@
  * The transparent pet window: plays catalogue clips, renders request bulbs and
  * quota badges, and forwards drag/interaction intents to the main process.
  */
-import { AnimationDirector } from '../core/animation.js';
-import { quotaEntries } from '../core/quota-display.js';
-import { providerIconSource, providerInitial } from '../core/provider-icons.js';
-import type { Activity, CatalogUpdate, PetSettings, PluginSnapshot, Quota, Theme } from '../core/types.js';
+import { AnimationDirector } from '../core/animation.ts';
+import { quotaEntries } from '../core/quota-display.ts';
+import { providerIconSource, providerInitial } from '../core/provider-icons.ts';
+import type { Activity, CatalogUpdate, PetSettings, PluginSnapshot, Quota, Theme } from '../core/types.ts';
 
 const api = window.pet;
 const videos = [...document.querySelectorAll('video')];

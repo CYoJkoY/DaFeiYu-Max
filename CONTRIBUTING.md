@@ -10,12 +10,7 @@
 
 ## 本地开发
 
-Windows、macOS 或 Linux 命令行都可以开发。Node.js 24+ 与全部 npm 命令两个平台一致；只有 Python 命令按平台区分：
-
-- Windows：`python scripts/download_assets.py`
-- macOS / Linux：`python3 scripts/download_assets.py`
-
-其余步骤两边完全相同：
+Windows、macOS 或 Linux 命令行都可以开发。Node.js 24+ 与全部 npm 命令两个平台一致，构建、图标、素材下载与打包脚本都是 TypeScript（`node scripts/*.ts`），不需要 Python 或额外的编译器：
 
 ```bash
 npm ci --ignore-scripts

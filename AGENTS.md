@@ -13,7 +13,7 @@
 ## 命令
 
 - npm 脚本两个平台一致：`npm run build`、`npm test`、`npm run check`、`npm start`。
-- Python 命令按平台区分：Windows 用 `python`，macOS/Linux 用 `python3`。
+- 工具链只用 TypeScript（`node scripts/*.ts`）与 Zig；不要引入 Python、`.mjs`/`.cjs` 源脚本等额外语言。构建产物里的 `.cjs` 仅是 Electron 主进程/预加载的运行时格式，不是源码。
 - 冒烟测试：`npm start -- --smoke-test`；产物写入 `DAFEIYU_QA_DIR` 或应用 userData 的 `qa/`，不写入应用安装目录，也不提交进仓库。
 
 ## 发布与安装约定

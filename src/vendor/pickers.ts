@@ -1,5 +1,5 @@
 // 纯选择逻辑：不依赖 React / DOM，可独立单测。浏览器 bundle 与桌面 shared-core 共用同一份源码。
-import type { Category, EventSlot, Events, Weights } from './types';
+import type { Category, EventSlot, Events, Weights } from './types.ts';
 
 /** 从字符串池里等概率随机抽一个；exclude 排除某个名字（避免连续重复） */
 export const pick = <T>(pool: T[], exclude?: T): T => {

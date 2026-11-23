@@ -1,4 +1,4 @@
-import type { ReadContext, ReadResult, SocialAdapter, SocialItem, SocialPlatformId, WriteRequest, WriteResult } from '../types.js';
+import type { ReadContext, ReadResult, SocialAdapter, SocialItem, SocialPlatformId, WriteRequest, WriteResult } from '../types.ts';
 
 /**
  * Douyin and Xiaoheihe expose no public read API. Rather than scraping logins,

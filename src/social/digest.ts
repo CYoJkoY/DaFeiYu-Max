@@ -1,5 +1,5 @@
-import type { SocialItem } from './types.js';
-import { platformLabel } from './registry.js';
+import type { SocialItem } from './types.ts';
+import { platformLabel } from './registry.ts';
 
 const MAX_SUMMARY = 600;
 

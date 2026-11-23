@@ -1,4 +1,4 @@
-import type { Dimensions, Point, Rect } from './types.js';
+import type { Dimensions, Point, Rect } from './types.ts';
 
 /**
  * Clamp a floating pet window so it stays reachable while still allowing the

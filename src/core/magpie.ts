@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createHmac, randomBytes } from 'node:crypto';
-import type { Activity, Quota, QuotaAccount, QuotaWindow } from './types.js';
+import type { Activity, Quota, QuotaAccount, QuotaWindow } from './types.ts';
 
 const identitySalt = randomBytes(32);
 const accountKey = (provider: string, user: string): string =>

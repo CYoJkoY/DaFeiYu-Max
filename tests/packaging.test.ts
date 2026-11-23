@@ -4,11 +4,10 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
-import { APP_NAME, iconPathFor, isDebugSymbol, isVendorPath, resolveTarget } from '../scripts/package.mjs';
+import { APP_NAME, iconPathFor, isDebugSymbol, isVendorPath, resolveTarget } from '../scripts/package.ts';
+import { crc32, readZip, writeZipFromDirectory } from '../scripts/lib/zip.ts';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const python = process.platform === 'win32' ? 'python' : 'python3';
 
 test('packaging selects native targets and icons without changing Mac defaults', () => {
   assert.deepEqual(resolveTarget({ platform: 'darwin' }), { platform: 'darwin', arch: 'arm64' });
@@ -40,25 +39,26 @@ test('Windows ZIP preserves Unicode names and binary contents and ships no insta
   writeFileSync(join(app, 'resources', '\u52a8\u753b.webm'), 'fixture');
   mkdirSync(join(app, 'resources', 'app', 'assets'), { recursive: true });
   writeFileSync(join(app, 'resources', 'app', 'assets', 'tray-icon.png'), 'icon');
-  execFileSync(python, [join(root, 'scripts/windows/archive.py'), app, archive]);
-  const inspection = JSON.parse(execFileSync(python, ['-c',
-    'import json,sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); print(json.dumps({"names":z.namelist(),"invalid":z.testzip(),"exe":list(z.read(sys.argv[2]))}))',
-    archive, `${APP_NAME}-win32-x64/BlueDaFeiYu.exe`], { encoding: 'utf8' }));
-  assert.equal(inspection.invalid, null);
-  assert.deepEqual(inspection.exe, [0, 1, 128, 255]);
-  assert.deepEqual(inspection.names.sort(), [
+  const entryNames = writeZipFromDirectory(app, archive);
+  const entries = readZip(readFileSync(archive));
+  const exe = entries.find(entry => entry.name === `${APP_NAME}-win32-x64/BlueDaFeiYu.exe`);
+  assert.ok(exe, 'BlueDaFeiYu.exe must be present in the archive');
+  assert.deepEqual([...exe.data], [0, 1, 128, 255]);
+  assert.equal(crc32(exe.data), crc32(Buffer.from([0, 1, 128, 255])));
+  assert.deepEqual(entryNames.sort(), [
     `${APP_NAME}-win32-x64/BlueDaFeiYu.exe`,
     `${APP_NAME}-win32-x64/resources/app/assets/tray-icon.png`,
     `${APP_NAME}-win32-x64/resources/\u52a8\u753b.webm`,
   ].sort());
-  assert.ok(!inspection.names.includes('install.ps1'));
-  for (const name of inspection.names) {
+  assert.ok(!entryNames.includes('install.ps1'));
+  for (const name of entryNames) {
     assert.ok(name.startsWith(`${APP_NAME}-win32-x64/`), `Unrooted archive entry: ${name}`);
   }
 });
 
-test('the installer script is gone and packaging archives only the app directory', () => {
+test('the installer script is gone and packaging uses the shared TypeScript ZIP writer', () => {
   assert.equal(existsSync(join(root, 'scripts/windows/install.ps1')), false);
-  const archiveScript = readFileSync(join(root, 'scripts/windows/archive.py'), 'utf8');
-  assert.ok(!/install\.ps1/i.test(archiveScript));
+  const zipSource = readFileSync(join(root, 'scripts/lib/zip.ts'), 'utf8');
+  assert.ok(zipSource.includes('writeZipFromDirectory'));
+  assert.ok(!/install\.ps1/i.test(zipSource));
 });

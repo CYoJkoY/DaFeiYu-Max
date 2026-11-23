@@ -87,7 +87,7 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 
 ### 开发与验证
 
-本地开发需要 Node.js 24+、npm 和 Git。TypeScript、图标与 Zig 编译、测试和应用打包全部由 GitHub Actions 执行；不要求本地安装编译器或生成构建产物。动画由 CI 从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。
+本地开发需要 Node.js 24+、npm 和 Git。构建、图标生成、素材下载、测试与应用打包都是 TypeScript 脚本（`npm run build` / `assets` / `package`，即 `node scripts/*.ts`），发布时也由 GitHub Actions 执行，不要求本地安装 Python 或其他语言的工具链。动画由 CI 从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。
 
 ## 一个仓库，两个平台
 

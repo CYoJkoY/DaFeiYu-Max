@@ -1,15 +1,21 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const { readFileSync, mkdirSync, writeFileSync, mkdtempSync, rmSync } = require('node:fs');
-const path = require('node:path');
-const { tmpdir } = require('node:os');
+/**
+ * Render the desktop pet with synthetic account data and save
+ * `docs/images/desktop.png`. Run with `electron` (compiled to
+ * `dist/tools/capture-demo.cjs` by `scripts/build.ts`).
+ */
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import * as path from 'node:path';
 
-const root = path.join(__dirname, '..');
+// Compiled output lives in dist/tools/, so the repository root is two levels up.
+const root = path.join(__dirname, '..', '..');
 const profile = mkdtempSync(path.join(tmpdir(), 'dafeiyu-demo-'));
 app.setPath('userData', profile);
 app.setName('magpie-DaFeiYu Demo');
 const catalog = JSON.parse(readFileSync(path.join(root, 'assets/catalog.json'), 'utf8'));
 const now = Date.now();
-const demo = [
+const demo: Array<[string, string, string, number]> = [
   ['cursor', 'cursor', 'Cursor', 96], ['codex', 'codex-color', 'Codex', 71], ['claude', 'claude-color', 'Claude', 64],
   ['gemini', 'gemini-color', 'Gemini', 88], ['openai', 'openai', 'OpenAI', 52], ['grok', 'grok', 'Grok', 100],
   ['qwen', 'qwen-color', 'Qwen', 79], ['zhipu', 'zhipu-color', 'GLM', 43], ['volcengine', 'volcengine-color', 'Volcengine Ark', 87],
@@ -30,8 +36,8 @@ const expected = [...demo.map(([, , , remaining]) => `${remaining}%`), '¥19.98'
 app.whenReady().then(async () => {
   app.dock?.hide();
   ipcMain.handle('snapshot', () => snapshot);
-  let window;
-  ipcMain.on('resize', (_event, height) => { if (window && Number.isFinite(height)) window.setContentSize(560, Math.round(height)); });
+  let window: BrowserWindow | undefined;
+  ipcMain.on('resize', (_event: unknown, height: number) => { if (window && Number.isFinite(height)) window.setContentSize(560, Math.round(height)); });
   window = new BrowserWindow({ width: 560, height: 470, frame: false, show: false,
     backgroundColor: '#eff5fc', webPreferences: { preload: path.join(root, 'dist/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
   await window.loadFile(path.join(root, 'dist/pet.html'));
@@ -49,6 +55,6 @@ app.whenReady().then(async () => {
   writeFileSync(path.join(output, 'desktop.png'), (await window.webContents.capturePage()).toPNG());
   console.log('Saved docs/images/desktop.png using synthetic account data.');
   app.quit();
-}).catch(error => { console.error(error); app.exit(1); });
+}).catch((error: unknown) => { console.error(error); app.exit(1); });
 
 app.on('will-quit', () => rmSync(profile, { recursive: true, force: true }));

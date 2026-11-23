@@ -1,4 +1,4 @@
-import { PLUGIN_SCHEMA_VERSION, type PluginManifest } from './manifest.js';
+import { PLUGIN_SCHEMA_VERSION, type PluginManifest } from './manifest.ts';
 
 /** Built-in plugins use the same declarative manifest contract as extensions. */
 export const BUILTIN_PLUGINS: readonly PluginManifest[] = [

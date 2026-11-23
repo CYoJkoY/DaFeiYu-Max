@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
-const metadata = JSON.parse(readFileSync(new URL('package.json', root)));
+const metadata = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
 
 test('Magpie discovers a committed page rather than loading Electron in its plugin host', () => {
   assert.equal(metadata.main, undefined);

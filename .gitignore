@@ -12,6 +12,7 @@ assets/app-icon.png
 assets/tray-icon.png
 assets/tray-icon@2x.png
 *.log
+.runtime-preview-*.png
 .DS_Store
 .env
 .env.*

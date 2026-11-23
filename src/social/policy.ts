@@ -1,4 +1,4 @@
-import type { SocialPlatformId } from './types.js';
+import type { SocialPlatformId } from './types.ts';
 
 /** Hard ceiling on automatic writes, regardless of what the UI asks for. */
 export const WRITE_LIMITS = { perMinute: 1, perDay: 20, maxLength: 280 } as const;

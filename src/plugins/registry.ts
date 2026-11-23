@@ -5,9 +5,9 @@ import {
   parsePluginManifest,
   type PluginKind,
   type PluginManifest,
-} from './manifest.js';
-import { builtinPlugins } from './builtin.js';
-import { festivalActive } from './calendar.js';
+} from './manifest.ts';
+import { builtinPlugins } from './builtin.ts';
+import { festivalActive } from './calendar.ts';
 
 export interface PluginRecord {
   manifest: PluginManifest;
