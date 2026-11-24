@@ -8,9 +8,36 @@
  * platform branch, and it keeps social writes behind the existing policy gate.
  */
 
+import type { ScriptSettingField } from '../core/types.ts';
+
 export const PLUGIN_SCHEMA_VERSION = 1;
 
-export type PluginKind = 'social' | 'appearance' | 'festival';
+export type PluginKind = 'social' | 'appearance' | 'festival' | 'script';
+
+/** The ABI version this runtime implements for authored-code (WASM) plug-ins. */
+export const SCRIPT_ABI_VERSION = 1;
+
+export type ScriptPermission = 'pet' | 'bridge' | 'net';
+
+/**
+ * Authored-code plug-in descriptor. Unlike the declarative kinds, a script
+ * plug-in ships a Zig-compiled WASM module the runtime feeds events. The host
+ * enforces `permissions` strictly: `pet` may ask the pet to speak/play/notify,
+ * `bridge` may reach only the origins of the user's configured URL options, and
+ * `net` may reach only the listed HTTPS hosts.
+ */
+export interface ScriptPluginSpec {
+  abi: number;
+  /** WASM file name inside the plug-in directory, e.g. `plugin.wasm`. */
+  entry: string;
+  permissions: ScriptPermission[];
+  /** HTTPS hostnames reachable with the `net` permission (may include `*.` wildcards). */
+  allowHosts?: string[];
+  /** Generic settings the panel renders; validated against each field type. */
+  settings?: ScriptSettingField[];
+  /** Commands the plug-in handles, surfaced as buttons in the panel. */
+  commands?: string[];
+}
 
 /** A social source implementation the runtime already contains compiled code for. */
 export type SocialImplementation = 'bilibili' | 'tieba' | 'bridge';
@@ -92,6 +119,7 @@ export interface PluginManifest {
   social?: SocialPluginSpec;
   appearance?: AppearancePluginSpec;
   festival?: FestivalPluginSpec;
+  script?: ScriptPluginSpec;
 }
 
 export type ManifestResult =
@@ -102,7 +130,9 @@ const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
 const MONTH_DAY = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
 const HEX_COLOR = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
-const KINDS: readonly PluginKind[] = ['social', 'appearance', 'festival'];
+const KINDS: readonly PluginKind[] = ['social', 'appearance', 'festival', 'script'];
+const SCRIPT_PERMISSIONS: readonly ScriptPermission[] = ['pet', 'bridge', 'net'];
+const SETTING_TYPES: readonly ScriptSettingField['type'][] = ['url', 'number', 'text', 'boolean'];
 const REQUIRES: readonly SocialPluginSpec['requires'][] = ['none', 'bridge', 'credentials'];
 const IMPLEMENTATIONS: readonly SocialImplementation[] = ['bilibili', 'tieba', 'bridge'];
 
@@ -285,6 +315,111 @@ function parseFestival(value: unknown): FestivalPluginSpec | string {
   return { window: parsed };
 }
 
+const HOSTNAME = /^(\*\.)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i;
+const WASM_ENTRY = /^[A-Za-z0-9._-]+\.wasm$/;
+
+function parseScriptSettings(value: unknown): ScriptSettingField[] | string {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return 'settings 必须是数组';
+  const fields: ScriptSettingField[] = [];
+  const seen = new Set<string>();
+  for (const entry of value) {
+    const record = asRecord(entry);
+    if (!record) return 'settings 的每一项必须是对象';
+    const id = boundedString(record.id, 48);
+    if (!id || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(id) || seen.has(id)) return `无效或重复的 settings.id：${String(record.id)}`;
+    seen.add(id);
+    const type = record.type as ScriptSettingField['type'];
+    if (!SETTING_TYPES.includes(type)) return `settings.${id}.type 必须是 url/number/text/boolean`;
+    const label = boundedString(record.label, 60);
+    if (!label) return `settings.${id}.label 必须是非空字符串`;
+    const field: ScriptSettingField = { id, type, label };
+    if (record.placeholder !== undefined) {
+      const placeholder = boundedString(record.placeholder, 120);
+      if (!placeholder) return `settings.${id}.placeholder 必须是 120 字以内`;
+      field.placeholder = placeholder;
+    }
+    if (type === 'url') {
+      const fallback = record.default === undefined ? undefined : sanitizeScriptUrl(record.default);
+      if (record.default !== undefined && fallback === undefined) return `settings.${id}.default 必须是 http(s) 地址`;
+      if (fallback) field.default = fallback;
+    } else if (type === 'number') {
+      if (record.default !== undefined && (typeof record.default !== 'number' || !Number.isFinite(record.default))) {
+        return `settings.${id}.default 必须是数字`;
+      }
+      if (typeof record.default === 'number') field.default = record.default;
+      if (record.min !== undefined && (typeof record.min !== 'number' || !Number.isFinite(record.min))) return `settings.${id}.min 必须是数字`;
+      if (record.max !== undefined && (typeof record.max !== 'number' || !Number.isFinite(record.max))) return `settings.${id}.max 必须是数字`;
+      if (typeof record.min === 'number') field.min = record.min;
+      if (typeof record.max === 'number') field.max = record.max;
+    } else if (type === 'boolean') {
+      if (record.default !== undefined && typeof record.default !== 'boolean') return `settings.${id}.default 必须是布尔值`;
+      if (typeof record.default === 'boolean') field.default = record.default;
+    } else {
+      const fallback = record.default === undefined ? undefined : boundedString(record.default, 200);
+      if (record.default !== undefined && !fallback) return `settings.${id}.default 必须是 200 字以内`;
+      if (fallback) field.default = fallback;
+    }
+    fields.push(field);
+    if (fields.length >= 24) break;
+  }
+  return fields;
+}
+
+/** Normalise an http(s) origin URL for a plug-in setting (no credentials, no query). */
+export function sanitizeScriptUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.trim();
+  if (!text || text.length > 300) return undefined;
+  let parsed: URL;
+  try {
+    parsed = new URL(text);
+  } catch {
+    return undefined;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return undefined;
+  if (parsed.username || parsed.password || parsed.search || parsed.hash) return undefined;
+  return parsed.origin + (parsed.pathname === '/' ? '' : parsed.pathname.replace(/\/+$/, ''));
+}
+
+function parseScript(value: unknown): ScriptPluginSpec | string {
+  const record = asRecord(value);
+  if (!record) return '脚本插件缺少 script 段';
+  if (record.abi !== SCRIPT_ABI_VERSION) {
+    return `脚本 ABI 必须是 ${SCRIPT_ABI_VERSION}（收到 ${String(record.abi)}）`;
+  }
+  const entry = typeof record.entry === 'string' ? record.entry.trim() : '';
+  if (!WASM_ENTRY.test(entry)) return 'entry 必须是插件目录内的 .wasm 文件名';
+  if (!Array.isArray(record.permissions)) return 'permissions 必须是数组';
+  const permissions: ScriptPermission[] = [];
+  for (const raw of record.permissions) {
+    const permission = raw as ScriptPermission;
+    if (!SCRIPT_PERMISSIONS.includes(permission)) return `未知的权限：${String(raw)}`;
+    if (!permissions.includes(permission)) permissions.push(permission);
+  }
+  if (!permissions.length) return '脚本插件必须至少声明一个权限（pet/bridge/net）';
+  const spec: ScriptPluginSpec = { abi: SCRIPT_ABI_VERSION, entry, permissions };
+  if (record.allowHosts !== undefined) {
+    const hosts = stringList(record.allowHosts, 200, 32);
+    if (!hosts || !hosts.length) return 'allowHosts 必须是非空字符串数组';
+    for (const host of hosts) if (!HOSTNAME.test(host)) return `allowHosts 中的主机名无效：${host}`;
+    spec.allowHosts = hosts;
+  }
+  if (permissions.includes('net') && !spec.allowHosts?.length) {
+    return 'net 权限必须同时声明 allowHosts';
+  }
+  const settings = parseScriptSettings(record.settings);
+  if (typeof settings === 'string') return settings;
+  if (settings.length) spec.settings = settings;
+  if (record.commands !== undefined) {
+    const commands = stringList(record.commands, 40, 12);
+    if (!commands || !commands.length) return 'commands 必须是非空字符串数组';
+    for (const command of commands) if (!/^[a-z][a-z0-9_-]{0,24}$/.test(command)) return `无效的命令名：${command}`;
+    spec.commands = commands;
+  }
+  return spec;
+}
+
 /** Validate a raw value (e.g. a parsed JSON file) into a plugin manifest. */
 export function parsePluginManifest(raw: unknown): ManifestResult {
   const record = asRecord(raw);
@@ -333,10 +468,14 @@ export function parsePluginManifest(raw: unknown): ManifestResult {
     const appearance = parseAppearance(record.appearance);
     if (typeof appearance === 'string') return fail(appearance);
     manifest.appearance = appearance;
-  } else {
+  } else if (kind === 'festival') {
     const festival = parseFestival(record.festival);
     if (typeof festival === 'string') return fail(festival);
     manifest.festival = festival;
+  } else {
+    const script = parseScript(record.script);
+    if (typeof script === 'string') return fail(script);
+    manifest.script = script;
   }
   return { ok: true, manifest };
 }

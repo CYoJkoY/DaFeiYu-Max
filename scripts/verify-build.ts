@@ -11,6 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export function requiredBuildInputs(platform: string = process.platform): string[] {
   return [
     'dist/main.cjs', 'dist/preload.cjs', 'dist/pet.js', 'dist/panel.js',
+    'dist/plugin-worker.cjs', 'dist/sdk/dfy.zig',
     'dist/pet.html', 'dist/pet.css', 'dist/panel.html', 'dist/panel.css',
     platform === 'win32' ? 'dist/native/petkit.exe' : 'dist/native/petkit',
     'assets/catalog.json', 'assets/tray-icon.png', 'assets/app-icon.ico', 'assets/app-icon.icns',

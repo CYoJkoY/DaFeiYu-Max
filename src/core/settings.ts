@@ -1,4 +1,6 @@
-import type { PetSettings, PlatformSettings, PluginSettings, SocialSettings } from './types.ts';
+import type {
+  MarketSettings, PetSettings, PlatformSettings, PluginSettings, ScriptPluginSelection, SocialSettings,
+} from './types.ts';
 
 export const PET_SIZES = [360, 460, 560] as const;
 export type PetSize = (typeof PET_SIZES)[number];
@@ -14,6 +16,8 @@ export const DEFAULT_SOCIAL: SocialSettings = {
 export const DEFAULT_PLUGINS: PluginSettings = {
   appearance: null,
   enabled: {},
+  scripts: {},
+  market: { repo: 'CYoJkoY/DaFeiYu-Max-Plugins', ref: 'main', lastSync: null },
 };
 
 export const DEFAULT_SETTINGS: PetSettings = {
@@ -112,6 +116,46 @@ export function sanitizeSocial(value: unknown, knownPlatforms: readonly string[]
   };
 }
 
+const REPO_PATTERN = /^[A-Za-z0-9_.-]{1,64}\/[A-Za-z0-9_.-]{1,100}$/;
+const REF_PATTERN = /^[A-Za-z0-9._/-]{1,120}$/;
+
+/** Repo (`owner/name`) and ref for the cloud market; reject anything path-traversal-ish. */
+export function sanitizeMarket(value: unknown): MarketSettings {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const repo = typeof source.repo === 'string' && REPO_PATTERN.test(source.repo.trim()) ? source.repo.trim() : DEFAULT_PLUGINS.market.repo;
+  const ref = typeof source.ref === 'string' && REF_PATTERN.test(source.ref.trim()) && !source.ref.includes('..')
+    ? source.ref.trim() : DEFAULT_PLUGINS.market.ref;
+  const lastSync = typeof source.lastSync === 'number' && Number.isFinite(source.lastSync) ? source.lastSync : null;
+  return { repo, ref, lastSync };
+}
+
+function sanitizeScriptOptions(value: unknown): Record<string, string | number | boolean> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const result: Record<string, string | number | boolean> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!/^[a-zA-Z][a-zA-Z0-9_-]{0,48}$/.test(key)) continue;
+    if (typeof raw === 'boolean') result[key] = raw;
+    else if (typeof raw === 'number' && Number.isFinite(raw)) result[key] = raw;
+    else if (typeof raw === 'string' && raw.length <= 300) result[key] = raw;
+    if (Object.keys(result).length >= 64) break;
+  }
+  return result;
+}
+
+/** Keep only authored-code plug-in selections that name a plausible kebab id. */
+export function sanitizeScripts(value: unknown): Record<string, ScriptPluginSelection> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const result: Record<string, ScriptPluginSelection> = {};
+  for (const [id, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (id.length > 64 || !SLUG_PATTERN.test(id)) continue;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const record = raw as Record<string, unknown>;
+    result[id] = { enabled: record.enabled === true, options: sanitizeScriptOptions(record.options) };
+    if (Object.keys(result).length >= 200) break;
+  }
+  return result;
+}
+
 /** Keep only declarative, well-formed plugin selections; never trusted as code. */
 export function sanitizePlugins(value: unknown): PluginSettings {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -126,7 +170,12 @@ export function sanitizePlugins(value: unknown): PluginSettings {
     enabled[id] = flag === true;
     if (Object.keys(enabled).length >= 200) break;
   }
-  return { appearance, enabled };
+  return {
+    appearance,
+    enabled,
+    scripts: sanitizeScripts(source.scripts),
+    market: sanitizeMarket(source.market),
+  };
 }
 
 /** Merge a persisted settings file into the defaults, discarding anything invalid. */
@@ -136,7 +185,7 @@ export function normalizeSettings(saved: unknown, knownPlatforms: readonly strin
     hiddenQuotas: {},
     interests: [...DEFAULT_SETTINGS.interests],
     social: { ...DEFAULT_SOCIAL, platforms: {} },
-    plugins: { appearance: null, enabled: {} },
+    plugins: { appearance: null, enabled: {}, scripts: {}, market: { ...DEFAULT_PLUGINS.market } },
   };
   if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return settings;
   const record = saved as Record<string, unknown>;

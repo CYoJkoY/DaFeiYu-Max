@@ -14,7 +14,16 @@
       <p class="note" id="festival-note">今天没有节日装扮。</p>
       <div id="plugin-list"></div>
       <p class="note" id="plugin-issues"></p>
-      <p class="note">外部插件是放在应用数据目录 <code>plugins/</code> 下的声明式 JSON，只扩展已内置的社交适配器、动作外观或节日装扮；应用不会执行插件代码，也不会自动发送任何内容。可写入的社交平台仍需在下方逐项启用，并在发送前逐条确认。</p>
+      <p class="note">外部插件是放在应用数据目录 <code>plugins/</code> 下的声明式 JSON，只扩展已内置的社交适配器、动作外观或节日装扮；可写入的社交平台仍需在下方逐项启用，并在发送前逐条确认。</p>
+    </section>
+    <section class="card">
+      <div class="row"><h2>插件市场</h2><span class="badge" id="market-state">未刷新</span></div>
+      <p class="note" id="market-note">插件用 Zig 编写、编译成 WASM 后在本地沙箱运行；编写与使用都在本机完成，不上传源码。</p>
+      <div class="row-actions social-actions"><button id="market-refresh" class="text-button">刷新市场</button><button id="plugin-local" class="text-button">编写本地插件…</button></div>
+      <div id="market-list"></div>
+      <div id="script-list"></div>
+      <p class="note" id="script-issues"></p>
+      <p class="note">市场插件按 SHA-256 校验后安装；未签名的脚本插件启用前请确认你信任其来源。</p>
     </section>
     <section class="card">
       <div class="row"><h2>它最近在关注</h2><span class="badge" id="social-state">未启用</span></div>

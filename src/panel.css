@@ -66,4 +66,10 @@ textarea { width: 100%; border: 1px solid #dde6f3; background: #f8faff; border-r
 .plugin-badges { display: inline-flex; gap: 4px; vertical-align: middle; }
 .active-badge { background: color-mix(in srgb, var(--accent) 16%, #ffffff); color: var(--accent); }
 .plugin-description { margin: 4px 0 0; }
+.plugin-field { display: grid; gap: 4px; margin-top: 8px; }
+.plugin-field.inline { display: flex; align-items: center; gap: 8px; }
+.plugin-field-label { font-size: 11px; color: #6b87a8; }
+.plugin-field input[type='text'],
+.plugin-field input[type='number'],
+.plugin-field input[type='url'] { width: 100%; border: 1px solid #dde6f3; background: #f8faff; border-radius: 8px; padding: 6px 9px; font-size: 12px; color: #37516f; }
 .plugin-issues { margin-top: 12px; }

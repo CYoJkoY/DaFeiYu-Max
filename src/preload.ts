@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-const CHANNELS = ['snapshot', 'activity', 'quota', 'play', 'cursor', 'settings', 'social', 'catalog'] as const;
+const CHANNELS = ['snapshot', 'activity', 'quota', 'play', 'cursor', 'settings', 'social', 'catalog', 'plugins-runtime'] as const;
 
 contextBridge.exposeInMainWorld('pet', {
   getSnapshot: () => ipcRenderer.invoke('snapshot'),
@@ -20,6 +20,14 @@ contextBridge.exposeInMainWorld('pet', {
   socialConfigure: (platform: string, patch: unknown) => ipcRenderer.invoke('social-configure', platform, patch),
   socialApprove: (id: string) => ipcRenderer.invoke('social-approve', id),
   socialReject: (id: string) => ipcRenderer.invoke('social-reject', id),
+  pluginsRuntimeStatus: () => ipcRenderer.invoke('plugins-runtime-status'),
+  marketRefresh: () => ipcRenderer.invoke('market-refresh'),
+  marketInstall: (id: string) => ipcRenderer.invoke('market-install', id),
+  marketUninstall: (id: string) => ipcRenderer.invoke('market-uninstall', id),
+  pluginToggle: (id: string, enabled: boolean) => ipcRenderer.invoke('plugin-toggle', id, enabled),
+  pluginOption: (id: string, key: string, value: unknown) => ipcRenderer.invoke('plugin-option', id, key, value),
+  pluginCommand: (id: string, name: string) => ipcRenderer.invoke('plugin-command', id, name),
+  pluginInstallLocal: () => ipcRenderer.invoke('plugin-install-local'),
   on: (channel: string, callback: (value: any) => void) => {
     if (!(CHANNELS as readonly string[]).includes(channel)) return;
     ipcRenderer.on(channel, (_event, value) => callback(value));

@@ -1,9 +1,9 @@
 import {
-  app, BrowserWindow, dialog, ipcMain, Menu, Tray, nativeImage, screen, shell,
+  app, BrowserWindow, dialog, ipcMain, Menu, Tray, nativeImage, net, screen, shell,
   type Display, type IpcMainEvent, type IpcMainInvokeEvent, type MenuItemConstructorOptions,
 } from 'electron';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { clampPetPosition } from './core/position.ts';
 import { mergeCachedQuota } from './core/magpie-cache.ts';
 import { magpieAppCandidates } from './core/platform.ts';
@@ -15,6 +15,14 @@ import { CredentialVault } from './social/vault.ts';
 import { SocialEngine } from './social/engine.ts';
 import { PluginRegistry } from './plugins/registry.ts';
 import { resolvePlugins } from './plugins/host.ts';
+import { createWorkerInvoker } from './plugins/script/invoker.ts';
+import { compileZigPlugin } from './plugins/script/build.ts';
+import { ScriptEngine } from './plugins/script/runtime.ts';
+import { parsePluginManifest } from './plugins/manifest.ts';
+import { buildLocalManifest } from './plugins/script/local.ts';
+import { MarketClient, createHttpFetcher } from './market/client.ts';
+import type { HostPetEffect } from './plugins/script/abi.ts';
+import type { MarketEntry } from './core/types.ts';
 import type {
   Activity, Catalog, PetSettings, PluginSnapshot, Point, Quota, SocialReport, Theme,
 } from './core/types.ts';
@@ -39,6 +47,8 @@ let native: NativeCore | null = null;
 let vault: CredentialVault | null = null;
 let social: SocialEngine | null = null;
 let registry: PluginRegistry | null = null;
+let scripts: ScriptEngine | null = null;
+let market: MarketClient | null = null;
 let theme: Theme = {};
 let pluginView: PluginSnapshot = { appearance: null, festival: null, entries: [], issues: [] };
 
@@ -83,7 +93,7 @@ const snapshot = () => ({
  */
 function applyPlugins(notify = false): void {
   if (!registry) return;
-  const resolved = resolvePlugins(baseCatalog, registry, settings, Date.now());
+  const resolved = resolvePlugins(baseCatalog, registry, settings, Date.now(), scripts?.viewEntries() ?? []);
   catalog = resolved.catalog;
   theme = resolved.theme;
   pluginView = resolved.view;
@@ -182,6 +192,32 @@ function play(name: string): void {
   if (!catalog.names.includes(name)) return;
   showPet();
   petWindow?.webContents.send('play', name);
+}
+
+function petEffect(effect: HostPetEffect): void {
+  if (effect.type === 'say') {
+    showPet();
+    petWindow?.webContents.send('say', effect.text);
+  }
+  if (effect.type === 'play') play(effect.clip);
+  if (effect.type === 'notify') {
+    void dialog.showMessageBox({ type: 'info', title: effect.title, message: effect.body });
+  }
+}
+
+function scriptRuntimeStatus(): unknown {
+  return {
+    market: market ? {
+      repo: settings.plugins.market.repo,
+      ref: settings.plugins.market.ref,
+      lastSync: settings.plugins.market.lastSync,
+      error: market.error,
+      index: market.index,
+      installed: market.provenance().installed,
+    } : null,
+    installed: scripts?.installed() ?? [],
+    issues: scripts?.issuesReport() ?? [],
+  };
 }
 
 function changeSetting(key: string, value: unknown): void {
@@ -382,6 +418,38 @@ if (!app.requestSingleInstanceLock()) {
 
     registry = new PluginRegistry();
     registry.loadDirectory(join(app.getPath('userData'), 'plugins'));
+    market = new MarketClient({
+      directory: join(app.getPath('userData'), 'plugins'),
+      provenancePath: join(app.getPath('userData'), 'plugin-market.json'),
+      getMarket: () => settings.plugins.market,
+      // Chromium networking: honours the system proxy, unlike Node's bare `fetch`.
+      fetcher: createHttpFetcher((url, init) => net.fetch(url, init)),
+      logger: message => console.log(`[market] ${message}`),
+    });
+    scripts = new ScriptEngine({
+      directory: join(app.getPath('userData'), 'plugins'),
+      stateDirectory: join(app.getPath('userData'), 'plugin-state'),
+      locale: 'zh-CN',
+      getInterests: () => settings.interests,
+      getBridgeUrl: () => settings.social.platforms.douyin?.bridgeUrl,
+      fetchImpl: (input, init) => net.fetch(
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+        init,
+      ),
+      getScripts: () => settings.plugins.scripts,
+      patchScripts: mutate => {
+        mutate(settings.plugins.scripts);
+        saveSettings();
+      },
+      invokerFactory: wasmPath => createWorkerInvoker(join(__dirname, 'plugin-worker.cjs'), wasmPath),
+      onPet: petEffect,
+      onStatus: () => send('plugins-runtime', scriptRuntimeStatus()),
+      originOf: id => market?.originOf(id) ?? 'local',
+      marketInfo: id => market?.marketInfo(id) ?? null,
+      logger: message => console.log(`[scripts] ${message}`),
+    });
+    scripts.reload();
+    void scripts.start();
     applyPlugins();
     for (const issue of pluginView.issues) console.log(`[plugins] ${issue}`);
 
@@ -487,6 +555,102 @@ if (!app.requestSingleInstanceLock()) {
       const report = social.reject(id);
       send('social', report);
       return report;
+    });
+
+    ipcMain.handle('plugins-runtime-status', event => trusted(event) ? scriptRuntimeStatus() : null);
+    ipcMain.handle('market-refresh', async event => {
+      if (!trusted(event) || !market) return null;
+      const result = await market.refresh();
+      if (result.ok) {
+        settings.plugins.market.lastSync = Date.now();
+        saveSettings();
+      }
+      send('plugins-runtime', scriptRuntimeStatus());
+      return scriptRuntimeStatus();
+    });
+    ipcMain.handle('market-install', async (event, id) => {
+      if (!trusted(event) || !market || !market.index || typeof id !== 'string') {
+        return { ok: false, error: '插件市场尚未就绪' };
+      }
+      const entry = market.index.plugins.find(item => item.id === id);
+      if (!entry) return { ok: false, error: '该插件不在市场索引中' };
+      const result = await market.install(entry as MarketEntry);
+      if (result.ok) {
+        scripts?.reload();
+        await scripts?.start();
+        applyPlugins(true);
+      }
+      send('plugins-runtime', scriptRuntimeStatus());
+      return result;
+    });
+    ipcMain.handle('market-uninstall', async (event, id) => {
+      if (!trusted(event) || !market || typeof id !== 'string') return { ok: false, error: '参数不合法' };
+      const result = market.uninstall(id);
+      if (result.ok) {
+        scripts?.forget(id);
+        scripts?.reload();
+        await scripts?.start();
+        applyPlugins(true);
+      }
+      send('plugins-runtime', scriptRuntimeStatus());
+      return result;
+    });
+    ipcMain.handle('plugin-toggle', (event, id, enabled) => {
+      if (!trusted(event) || !scripts || typeof id !== 'string' || typeof enabled !== 'boolean') return false;
+      return scripts.setEnabled(id, enabled);
+    });
+    ipcMain.handle('plugin-option', (event, id, key, value) => {
+      if (!trusted(event) || !scripts || typeof id !== 'string' || typeof key !== 'string') return false;
+      return scripts.setOption(id, key, value);
+    });
+    ipcMain.handle('plugin-command', (event, id, name) => {
+      if (!trusted(event) || !scripts || typeof id !== 'string' || typeof name !== 'string') return false;
+      return scripts.command(id, name);
+    });
+    ipcMain.handle('plugin-install-local', async event => {
+      if (!trusted(event) || !scripts) return { ok: false, error: '脚本运行时不可用' };
+      const picked = await dialog.showOpenDialog({
+        title: '选择插件源码（main.zig）',
+        properties: ['openFile'],
+        filters: [{ name: 'Zig 源码', extensions: ['zig'] }],
+      });
+      const sourcePath = picked.filePaths[0];
+      if (picked.canceled || !sourcePath) return { ok: false, error: '未选择源文件' };
+      const compiled = await compileZigPlugin({
+        sourcePath,
+        sdkPath: join(__dirname, 'sdk/dfy.zig'),
+      });
+      if (!compiled.ok) return { ok: false, error: compiled.error, detail: compiled.detail };
+
+      // A sibling `plugin.json` describes the plug-in exactly as the author
+      // wants it (settings, commands, display name). Without one we synthesize
+      // a minimal manifest so a bare `main.zig` still installs and runs.
+      const sourceDirectory = dirname(sourcePath);
+      const sibling = join(sourceDirectory, 'plugin.json');
+      let existing: Record<string, unknown> | null = null;
+      if (existsSync(sibling)) {
+        try {
+          const candidate = JSON.parse(readFileSync(sibling, 'utf8')) as Record<string, unknown>;
+          const siblingCheck = parsePluginManifest(candidate);
+          if (siblingCheck.ok && siblingCheck.manifest.kind === 'script' && siblingCheck.manifest.script) existing = candidate;
+        } catch {
+          existing = null;
+        }
+      }
+      const checked = buildLocalManifest({
+        directoryName: basename(sourceDirectory),
+        existing,
+      });
+      if (!checked.ok) return { ok: false, error: `插件清单无效：${checked.error}` };
+      const id = checked.manifest.id;
+      const directory = join(app.getPath('userData'), 'plugins', id);
+      const { writeModule } = await import('./plugins/script/build.ts');
+      writeModule(directory, compiled.wasm);
+      writeFileSync(join(directory, 'plugin.json'), JSON.stringify(checked.manifest, null, 2));
+      scripts.reload();
+      applyPlugins(true);
+      send('plugins-runtime', scriptRuntimeStatus());
+      return { ok: true, id, note: '已在本机编译并安装到本地插件目录（不上传）。' };
     });
 
     const area = screen.getPrimaryDisplay().workArea;
@@ -657,5 +821,6 @@ app.on('window-all-closed', () => {});
 app.on('before-quit', () => {
   for (const timer of timers) clearInterval(timer);
   social?.stop();
+  scripts?.stop();
   native?.close();
 });

@@ -35,6 +35,18 @@ await build({
 });
 
 await build({
+  entryPoints: [join(root, 'src/plugins/script/worker.ts')],
+  outfile: join(root, 'dist/plugin-worker.cjs'),
+  bundle: true,
+  platform: 'node',
+  target: 'node22',
+  format: 'cjs',
+  external: nodeExternals,
+  define,
+  logLevel: 'warning',
+});
+
+await build({
   entryPoints: [join(root, 'src/renderer/pet.ts'), join(root, 'src/renderer/panel.ts')],
   outdir: join(root, 'dist'),
   bundle: true,
@@ -63,6 +75,9 @@ await build({
 for (const name of ['pet.html', 'pet.css', 'panel.html', 'panel.css']) {
   cpSync(join(root, 'src', name), join(root, 'dist', name));
 }
+
+mkdirSync(join(root, 'dist/sdk'), { recursive: true });
+cpSync(join(root, 'sdk/dfy.zig'), join(root, 'dist/sdk/dfy.zig'));
 
 // Ship the Zig sidecar. `zig build` writes to native/zig-out/bin; native/bin is
 // kept as a fallback for pre-built binaries dropped in by hand.

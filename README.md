@@ -17,7 +17,7 @@
 ![Windows 10+ x64](https://img.shields.io/badge/Windows-10%2B%20x64-426B9A)
 ![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-4C78A8)
 ![Magpie](https://img.shields.io/badge/Magpie-local%20integration-C7475C)
-![Version](https://img.shields.io/badge/version-0.1.6-4C78A8)
+![Version](https://img.shields.io/badge/version-0.1.7-4C78A8)
 ![Code MIT](https://img.shields.io/badge/code-MIT-538476)
 ![Artwork noncommercial](https://img.shields.io/badge/artwork-noncommercial-D19A35)
 
@@ -53,11 +53,11 @@
 
 ### 直接用 App（推荐）
 
-先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.6-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.6-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
+先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.7-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.7-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
 
 **Windows 10+ x64**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.6-Windows-x64.zip` 并解压。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.7-Windows-x64.zip` 并解压。
 2. 进入解压后的 `蓝色大肥鱼-win32-x64` 文件夹，双击 `BlueDaFeiYu.exe`。压缩包不含安装器，应用可从任意文件夹直接运行。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)。
 
@@ -67,7 +67,7 @@ Windows 版没有代码签名。若 SmartScreen 拦截，请先核对下载来�
 
 **macOS（Apple Silicon）**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.6-macOS-arm64.zip`。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.7-macOS-arm64.zip`。
 2. 解压后把「蓝色大肥鱼.app」拖进「应用程序」，再从菜单栏打开。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)，请求灯泡和额度会自动接入。
 
@@ -111,6 +111,15 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 本地接口只连接 `127.0.0.1:3425`（支持自定义端口）：并发状态每 2 秒读取，额度和今日统计每 30 秒刷新。Magpie 的配置按官方约定读取 `~/.config/magpie/settings.json`（遵循 `XDG_CONFIG_HOME`），Windows 与 macOS 路径一致。账号归属只在内存中换算为每次启动重新生成的代号。
 
 每次请求都带 `Authorization: Bearer magpie-dafeiyu`，Magpie 的用量统计会把它记为本应用；如果你在 Magpie 里创建了网关 key，可以用环境变量 `MAGPIE_API_KEY` 让桌宠改用它。标出「正在使用」的账号依赖 Magpie 内部的 trace 接口，它以后可能变化；读不到时灯泡照常亮，只是不标红账号。
+
+## 插件：自己写，直接跑
+
+面板里的「插件」支持两层玩法，都和桌宠本体一样只在本机运行：
+
+- **本地编写**：写一个 `main.zig`，在面板点「安装本地插件」并选中它。应用用你机器上的 Zig 编译成 WASM，先回灌沙箱确认它能应答，再装进本地插件目录立即启用。**全程不上传。**
+- **云端市场**：在独立的 [DaFeiYu-Max-Plugins](https://github.com/CYoJkoY/DaFeiYu-Max-Plugins) 仓库挑选插件，面板里刷新后安装。下载的清单与模块会经过路径、大小与 SHA-256 三重校验，通过后才落盘。
+
+插件跑在独立的 worker 沙箱里，不能自己联网、弹窗或读写磁盘；它只能提交「意图」，由应用按清单声明的 `pet` / `bridge` / `net` 权限逐条审查后执行。仓库自带一个示例：`douyin-scroll`（刷抖音）通过本机桥接挑一条推荐念给桌宠听，不点赞、不评论、不发送。详见 [docs/plugin-market.md](docs/plugin-market.md) 与 [docs/plugins.md](docs/plugins.md)。
 
 ## 致谢与许可
 

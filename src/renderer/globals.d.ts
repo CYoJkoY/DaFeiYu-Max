@@ -4,7 +4,8 @@
  * both bundles.
  */
 import type {
-  Activity, Catalog, CatalogUpdate, PetSettings, PluginSnapshot, Quota, SocialReport, Snapshot, Theme,
+  Activity, Catalog, CatalogUpdate, InstalledScriptPlugin, MarketIndex, PetSettings,
+  PluginSnapshot, Quota, SocialReport, Snapshot, Theme,
 } from '../core/types.ts';
 
 export interface PetApi {
@@ -25,7 +26,34 @@ export interface PetApi {
   socialConfigure(platform: string, patch: Record<string, unknown>): Promise<SocialReport | null>;
   socialApprove(id: string): Promise<{ report: SocialReport; ok: boolean; note: string } | null>;
   socialReject(id: string): Promise<SocialReport | null>;
-  on(channel: 'snapshot' | 'activity' | 'quota' | 'play' | 'cursor' | 'settings' | 'social' | 'catalog', callback: (value: any) => void): void;
+  pluginsRuntimeStatus(): Promise<PluginsRuntimeStatus | null>;
+  marketRefresh(): Promise<PluginsRuntimeStatus | null>;
+  marketInstall(id: string): Promise<{ ok: boolean; error?: string } | null>;
+  marketUninstall(id: string): Promise<{ ok: boolean; error?: string } | null>;
+  pluginToggle(id: string, enabled: boolean): Promise<boolean>;
+  pluginOption(id: string, key: string, value: unknown): Promise<boolean>;
+  pluginCommand(id: string, name: string): Promise<boolean>;
+  pluginInstallLocal(): Promise<{ ok: boolean; error?: string; detail?: string; id?: string; note?: string } | null>;
+  on(channel: 'snapshot' | 'activity' | 'quota' | 'play' | 'cursor' | 'settings' | 'social' | 'catalog' | 'plugins-runtime', callback: (value: any) => void): void;
+}
+
+export interface MarketProvenanceEntry {
+  version: string;
+  sha256: string;
+  installedAt: number;
+}
+
+export interface PluginsRuntimeStatus {
+  market: {
+    repo: string;
+    ref: string;
+    lastSync: number | null;
+    error: string | null;
+    index: MarketIndex | null;
+    installed: Record<string, MarketProvenanceEntry>;
+  } | null;
+  installed: InstalledScriptPlugin[];
+  issues: string[];
 }
 
 export interface PetDiagnostics {
@@ -45,5 +73,6 @@ declare global {
 }
 
 export type {
-  Activity, Catalog, CatalogUpdate, PetSettings, PluginSnapshot, Quota, SocialReport, Snapshot, Theme,
+  Activity, Catalog, CatalogUpdate, InstalledScriptPlugin, MarketIndex, PetSettings,
+  PluginSnapshot, Quota, SocialReport, Snapshot, Theme,
 };

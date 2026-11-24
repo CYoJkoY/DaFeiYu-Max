@@ -59,6 +59,7 @@ export function resolvePlugins(
   registry: PluginRegistry,
   settings: PetSettings,
   now: number | Date = Date.now(),
+  scriptEntries: PluginViewEntry[] = [],
 ): ResolvedPlugins {
   const settingsChanged = prunePluginSelections(settings, registry);
   const selectedAppearance = appearanceIdOf(settings);
@@ -114,6 +115,7 @@ export function resolvePlugins(
       enabled: enabled[manifest.id] !== false,
     };
   });
+  entries.push(...scriptEntries);
 
   return {
     catalog,
