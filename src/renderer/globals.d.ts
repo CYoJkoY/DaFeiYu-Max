@@ -9,6 +9,7 @@ import type {
 } from '../core/types.ts';
 
 export interface PetApi {
+  platform: 'darwin' | 'win32' | 'linux' | string;
   getSnapshot(): Promise<Snapshot>;
   play(name: string): void;
   menu(): void;
@@ -19,6 +20,8 @@ export interface PetApi {
   interactive(value: boolean): void;
   openMagpie(): void;
   openRepository(): void;
+  windowControl(action: 'minimize' | 'maximize' | 'close'): void;
+  windowState(): Promise<{ maximized: boolean } | null>;
   resize(height: number): void;
   socialStatus(): Promise<SocialReport | null>;
   socialRefresh(): Promise<SocialReport | null>;
@@ -34,7 +37,7 @@ export interface PetApi {
   pluginOption(id: string, key: string, value: unknown): Promise<boolean>;
   pluginCommand(id: string, name: string): Promise<boolean>;
   pluginInstallLocal(): Promise<{ ok: boolean; error?: string; detail?: string; id?: string; note?: string } | null>;
-  on(channel: 'snapshot' | 'activity' | 'quota' | 'play' | 'cursor' | 'settings' | 'social' | 'catalog' | 'plugins-runtime', callback: (value: any) => void): void;
+  on(channel: 'snapshot' | 'activity' | 'quota' | 'play' | 'cursor' | 'settings' | 'social' | 'catalog' | 'plugins-runtime' | 'window-state', callback: (value: any) => void): void;
 }
 
 export interface MarketProvenanceEntry {

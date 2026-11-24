@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-const CHANNELS = ['snapshot', 'activity', 'quota', 'play', 'cursor', 'settings', 'social', 'catalog', 'plugins-runtime'] as const;
+const CHANNELS = ['snapshot', 'activity', 'quota', 'play', 'cursor', 'settings', 'social', 'catalog', 'plugins-runtime', 'window-state'] as const;
 
 contextBridge.exposeInMainWorld('pet', {
+  platform: process.platform,
   getSnapshot: () => ipcRenderer.invoke('snapshot'),
   play: (name: string) => ipcRenderer.send('play', name),
   menu: () => ipcRenderer.send('menu'),
@@ -13,6 +14,8 @@ contextBridge.exposeInMainWorld('pet', {
   interactive: (value: boolean) => ipcRenderer.send('interactive', value),
   openMagpie: () => ipcRenderer.send('open-magpie'),
   openRepository: () => ipcRenderer.send('open-repository'),
+  windowControl: (action: 'minimize' | 'maximize' | 'close') => ipcRenderer.send('window-control', action),
+  windowState: () => ipcRenderer.invoke('window-state'),
   resize: (height: number) => ipcRenderer.send('resize', height),
   socialStatus: () => ipcRenderer.invoke('social-status'),
   socialRefresh: () => ipcRenderer.invoke('social-refresh'),

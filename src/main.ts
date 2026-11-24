@@ -62,6 +62,10 @@ let momentum: { x: number; y: number; velocityX: number; velocityY: number; star
 let lastInteractive = false;
 let contentHeight: number | null = null;
 const timers: NodeJS.Timeout[] = [];
+// The drag/momentum loop only runs while something is actually moving: a
+// 16 ms tick that polls the cursor every frame costs battery and wakes the
+// compositor for nothing while the pet just sits there.
+let moveTimer: NodeJS.Timeout | null = null;
 
 const BOOLEAN_KEYS = ['active', 'paused', 'locked', 'followTasks', 'showBulbs', 'showQuotas'] as const;
 type BooleanSettingKey = (typeof BOOLEAN_KEYS)[number];
@@ -175,8 +179,13 @@ function showPanel(): void {
   }
   panelWindow = new BrowserWindow({
     width: 460, height: 680, minWidth: 400, minHeight: 540,
-    title: '蓝色大肥鱼 · 陪伴面板', backgroundColor: '#f5f8ff', show: false, icon: appIcon,
-    autoHideMenuBar: true,
+    title: '蓝色大肥鱼 · 陪伴面板', backgroundColor: '#f3f7fd', show: false, icon: appIcon,
+    // The panel draws its own title bar on Windows/Linux so the caption
+    // buttons match the pet's artwork instead of the OS chrome. macOS keeps
+    // the native traffic lights, inset into the same 42px strip.
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    trafficLightPosition: process.platform === 'darwin' ? { x: 14, y: 14 } : undefined,
+    roundedCorners: true, autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, 'preload.cjs'),
       contextIsolation: true, nodeIntegration: false, sandbox: true,
@@ -185,6 +194,15 @@ function showPanel(): void {
   guardWindow(panelWindow);
   void panelWindow.loadFile(join(__dirname, 'panel.html'));
   panelWindow.once('ready-to-show', () => panelWindow?.show());
+  const pushWindowState = (): void => {
+    if (panelWindow && !panelWindow.isDestroyed()) {
+      panelWindow.webContents.send('window-state', { maximized: panelWindow.isMaximized() });
+    }
+  };
+  panelWindow.on('maximize', pushWindowState);
+  panelWindow.on('unmaximize', pushWindowState);
+  panelWindow.on('enter-full-screen', pushWindowState);
+  panelWindow.on('leave-full-screen', pushWindowState);
   panelWindow.on('closed', () => { panelWindow = null; });
 }
 
@@ -377,6 +395,18 @@ function moveTick(): void {
       persistPosition();
     }
   }
+  if (!dragState && !momentum) stopMoveLoop();
+}
+
+function startMoveLoop(): void {
+  if (moveTimer) return;
+  moveTimer = setInterval(moveTick, 16);
+}
+
+function stopMoveLoop(): void {
+  if (!moveTimer) return;
+  clearInterval(moveTimer);
+  moveTimer = null;
 }
 
 function trusted(event: IpcMainEvent | IpcMainInvokeEvent): boolean {
@@ -480,6 +510,19 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.on('open-repository', event => {
       if (trusted(event)) void shell.openExternal('https://github.com/CYoJkoY/DaFeiYu-Max');
     });
+    // Custom caption buttons live in panel.html; only the panel may drive them.
+    ipcMain.on('window-control', (event, action) => {
+      if (!panelWindow || panelWindow.isDestroyed() || event.sender !== panelWindow.webContents) return;
+      if (action === 'minimize') panelWindow.minimize();
+      else if (action === 'maximize') {
+        if (panelWindow.isMaximized()) panelWindow.unmaximize();
+        else panelWindow.maximize();
+      } else if (action === 'close') panelWindow.close();
+    });
+    ipcMain.handle('window-state', event => {
+      if (!panelWindow || panelWindow.isDestroyed() || event.sender !== panelWindow.webContents) return null;
+      return { maximized: panelWindow.isMaximized() };
+    });
     ipcMain.on('resize', (event, height) => {
       if (!petWindow || event.sender !== petWindow.webContents || !Number.isFinite(height) || dragState) return;
       const next = Math.round(height as number);
@@ -505,6 +548,7 @@ if (!app.requestSingleInstanceLock()) {
           last: cursor, lastTime: Date.now(), lastMoved: Date.now(), velocity: { x: 0, y: 0 },
         };
         petWindow.setIgnoreMouseEvents(false);
+        startMoveLoop();
       } else if (phase === 'end' && dragState) {
         const velocity = dragState.velocity;
         const bounds = petWindow.getBounds();
@@ -515,6 +559,7 @@ if (!app.requestSingleInstanceLock()) {
             velocityY: Math.max(-2000, Math.min(2000, velocity.y)),
             started: Date.now(), display: screen.getDisplayNearestPoint(screen.getCursorScreenPoint()),
           };
+          startMoveLoop();
         }
         dragState = null;
         petWindow.setIgnoreMouseEvents(!lastInteractive, { forward: true });
@@ -707,7 +752,6 @@ if (!app.requestSingleInstanceLock()) {
     void updateActivity();
     timers.push(setInterval(() => { void updateActivity(); }, 2000));
     timers.push(setInterval(() => { void refreshQuota(); }, 30000));
-    timers.push(setInterval(moveTick, 16));
     timers.push(setInterval(() => {
       if (!petWindow || !petWindow.isVisible()) return;
       const cursor = screen.getCursorScreenPoint();
@@ -729,97 +773,145 @@ function runSmoke(updateActivity: () => Promise<void>): void {
   setTimeout(() => play('放烟花'), 3500);
   setTimeout(() => play('凭空生花'), 15000);
   setTimeout(showPanel, 23000);
-  setTimeout(async () => {
-    if (!petWindow) return;
-    const window = petWindow;
-    const controls = await window.webContents.executeJavaScript(`(async () => {
-      const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
-      const currentVideo = () => [...document.querySelectorAll('video')].find(video => video.style.opacity === '1');
-      await delay(100);
-      const before = window.petDiagnostics.played.at(-1);
-      document.querySelector('#next-action').click();
-      await delay(800);
-      const switched = window.petDiagnostics.played.at(-1) !== before;
-      document.querySelector('#pause').click();
-      await delay(100);
-      const frozenAt = currentVideo().currentTime;
-      await delay(250);
-      const paused = currentVideo().paused && currentVideo().currentTime === frozenAt;
-      const pauseIcon = document.querySelector('#pause').getAttribute('aria-pressed') === 'true' && !document.querySelector('#play-icon').hasAttribute('hidden');
-      document.querySelector('#next-action').click();
-      await delay(800);
-      const switchedWhilePaused = currentVideo().paused;
-      document.querySelector('#pause').click();
-      await delay(100);
-      const resumedAt = currentVideo().currentTime;
-      await delay(250);
-      return { switched, paused, pauseIcon, switchedWhilePaused, resumed: !currentVideo().paused && currentVideo().currentTime > resumedAt,
-        buttons: [...document.querySelectorAll('nav button')].map(button => button.id), noTopBubble: !document.querySelector('#bubble') };
-    })()`);
-    const bulbs: { requests: number; lit: number }[] = [];
-    for (const count of [0, 1, 3, 7]) {
-      window.webContents.send('activity', { ...activity, available: true, activeCount: count });
-      await new Promise(resolve => setTimeout(resolve, 100));
-      bulbs.push({ requests: count, lit: await window.webContents.executeJavaScript('document.querySelectorAll(".bulb.lit").length') });
-    }
-    const accountBadges: unknown[] = [];
-    for (const count of [0, 1, quota.accounts?.length || 0]) {
-      window.webContents.send('activity', {
-        ...activity, available: true, observedAt: Date.now(), activeCount: count,
-        activeAccountIds: (quota.accounts || []).slice(0, count).map(account => account.accountId),
-      });
-      await new Promise(resolve => setTimeout(resolve, 100));
-      accountBadges.push({
-        expectedActive: count,
-        badges: await window.webContents.executeJavaScript(
-          '[...document.querySelectorAll(".account-quota")].map(badge => ({ text: badge.textContent, active: badge.classList.contains("active"), color: getComputedStyle(badge).color }))'),
-      });
-      if (count === 1) {
-        mkdirSync(qaDirectory, { recursive: true });
-        writeFileSync(join(qaDirectory, 'account-colors.png'), (await window.webContents.capturePage()).toPNG());
+  setTimeout(() => {
+    const finish = async () => {
+      if (!petWindow) return;
+      const window = petWindow;
+      const controls = await window.webContents.executeJavaScript(`(async () => {
+        const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+        const currentVideo = () => [...document.querySelectorAll('video')].find(video => video.style.opacity === '1') ?? null;
+        const click = selector => document.querySelector(selector)?.click();
+        await delay(100);
+        const before = window.petDiagnostics.played.at(-1);
+        click('#next-action');
+        await delay(800);
+        const switched = window.petDiagnostics.played.at(-1) !== before;
+        click('#pause');
+        await delay(100);
+        const frozenAt = currentVideo()?.currentTime ?? null;
+        await delay(250);
+        const pausedVideo = currentVideo();
+        const paused = frozenAt !== null && pausedVideo?.paused === true && pausedVideo.currentTime === frozenAt;
+        const pauseIcon = document.querySelector('#pause')?.getAttribute('aria-pressed') === 'true'
+          && document.querySelector('#play-icon') !== null && !document.querySelector('#play-icon').hasAttribute('hidden');
+        click('#next-action');
+        await delay(800);
+        const switchedWhilePaused = currentVideo()?.paused ?? null;
+        click('#pause');
+        await delay(100);
+        const resumedAt = currentVideo()?.currentTime ?? null;
+        await delay(250);
+        const resumedVideo = currentVideo();
+        return { videoAvailable: currentVideo() !== null, switched, paused, pauseIcon, switchedWhilePaused,
+          resumed: resumedAt !== null && resumedVideo !== null && !resumedVideo.paused && resumedVideo.currentTime > resumedAt,
+          buttons: [...document.querySelectorAll('nav button')].map(button => button.id), noTopBubble: !document.querySelector('#bubble') };
+      })()`);
+      const bulbs: { requests: number; lit: number }[] = [];
+      for (const count of [0, 1, 3, 7]) {
+        window.webContents.send('activity', { ...activity, available: true, activeCount: count });
+        await new Promise(resolve => setTimeout(resolve, 100));
+        bulbs.push({ requests: count, lit: await window.webContents.executeJavaScript('document.querySelectorAll(".bulb.lit").length') });
       }
-    }
-    const accountLayout = await window.webContents.executeJavaScript(`(() => {
-      const row = document.querySelector('#account-quotas');
-      const sample = row.firstElementChild;
-      if (!sample) return { available: false };
-      while (row.children.length < 12) row.append(sample.cloneNode(true));
-      const boxes = [...row.children].map(badge => badge.getBoundingClientRect());
-      const aboveButtons = row.getBoundingClientRect().bottom < document.querySelector('nav').getBoundingClientRect().top;
-      row.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, cancelable: true }));
-      return { available: true, sameRow: boxes.every(box => box.top === boxes[0].top), aboveButtons,
-        scrollable: row.scrollWidth > row.clientWidth, wheelScrolls: row.scrollLeft > 0, count: boxes.length };
-    })()`);
-    window.webContents.send('quota', quota);
-    window.webContents.send('activity', activity);
-    const report = await window.webContents.executeJavaScript('window.petDiagnostics');
-    const originalBounds = window.getBounds();
-    const workArea = screen.getPrimaryDisplay().workArea;
-    const requested = clampPosition({ x: workArea.x + workArea.width, y: originalBounds.y }, screen.getPrimaryDisplay());
-    window.setPosition(requested.x, requested.y);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const edge = { requested, actual: window.getBounds(), workArea };
-    window.setBounds(originalBounds);
-    const ui = await window.webContents.executeJavaScript('({ filter: getComputedStyle(document.querySelector("video")).filter, status: document.querySelector("#request-lights").getAttribute("aria-label") })');
-    mkdirSync(qaDirectory, { recursive: true });
-    writeFileSync(join(qaDirectory, 'smoke.json'), JSON.stringify({
-      report, activity, quota, edge, ui, controls, bulbs, accountBadges, accountLayout,
-      social: social?.status() ?? null, native: native?.active ?? false,
-    }, null, 2));
-    const image = await window.webContents.capturePage();
-    writeFileSync(join(qaDirectory, 'pet.png'), image.toPNG());
-    if (panelWindow) {
-      await panelWindow.webContents.executeJavaScript('window.scrollTo(0, 0)');
-      await new Promise(resolve => setTimeout(resolve, 100));
-      writeFileSync(join(qaDirectory, 'panel.png'), (await panelWindow.webContents.capturePage()).toPNG());
-    }
-    app.quit();
+      const accountBadges: unknown[] = [];
+      for (const count of [0, 1, quota.accounts?.length || 0]) {
+        window.webContents.send('activity', {
+          ...activity, available: true, observedAt: Date.now(), activeCount: count,
+          activeAccountIds: (quota.accounts || []).slice(0, count).map(account => account.accountId),
+        });
+        await new Promise(resolve => setTimeout(resolve, 100));
+        accountBadges.push({
+          expectedActive: count,
+          badges: await window.webContents.executeJavaScript(
+            '[...document.querySelectorAll(".account-quota")].map(badge => ({ text: badge.textContent, active: badge.classList.contains("active"), color: getComputedStyle(badge).color }))'),
+        });
+        if (count === 1) {
+          mkdirSync(qaDirectory, { recursive: true });
+          writeFileSync(join(qaDirectory, 'account-colors.png'), (await window.webContents.capturePage()).toPNG());
+        }
+      }
+      const accountLayout = await window.webContents.executeJavaScript(`(() => {
+        const row = document.querySelector('#account-quotas');
+        const sample = row.firstElementChild;
+        if (!sample) return { available: false };
+        while (row.children.length < 12) row.append(sample.cloneNode(true));
+        const boxes = [...row.children].map(badge => badge.getBoundingClientRect());
+        const aboveButtons = row.getBoundingClientRect().bottom < document.querySelector('nav').getBoundingClientRect().top;
+        row.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, cancelable: true }));
+        return { available: true, sameRow: boxes.every(box => box.top === boxes[0].top), aboveButtons,
+          scrollable: row.scrollWidth > row.clientWidth, wheelScrolls: row.scrollLeft > 0, count: boxes.length };
+      })()`);
+      window.webContents.send('quota', quota);
+      window.webContents.send('activity', activity);
+      const report = await window.webContents.executeJavaScript('window.petDiagnostics');
+      const originalBounds = window.getBounds();
+      const workArea = screen.getPrimaryDisplay().workArea;
+      const requested = clampPosition({ x: workArea.x + workArea.width, y: originalBounds.y }, screen.getPrimaryDisplay());
+      window.setPosition(requested.x, requested.y);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const edge = { requested, actual: window.getBounds(), workArea };
+      window.setBounds(originalBounds);
+      // Drag behaviour: the move loop is started on demand. While a drag is
+      // live the window must follow the cursor (so an external nudge is
+      // corrected on the next tick), and after release it must stay put.
+      await window.webContents.executeJavaScript("window.pet.drag('start')");
+      await new Promise(resolve => setTimeout(resolve, 120));
+      window.setPosition(originalBounds.x + 80, originalBounds.y + 60);
+      await new Promise(resolve => setTimeout(resolve, 260));
+      const dragging = window.getBounds();
+      await window.webContents.executeJavaScript("window.pet.drag('end')");
+      await new Promise(resolve => setTimeout(resolve, 120));
+      const released = window.getBounds();
+      window.setPosition(released.x - 50, released.y - 40);
+      await new Promise(resolve => setTimeout(resolve, 260));
+      const afterRelease = window.getBounds();
+      window.setBounds(originalBounds);
+      const drag = {
+        moved: released.x === originalBounds.x && released.y === originalBounds.y,
+        snappedBack: Math.abs(dragging.x - originalBounds.x) <= 2 && Math.abs(dragging.y - originalBounds.y) <= 2,
+        stayedPut: Math.abs(afterRelease.x - (released.x - 50)) <= 2 && Math.abs(afterRelease.y - (released.y - 40)) <= 2,
+        dragging, released,
+      };
+      const ui = await window.webContents.executeJavaScript('({ filter: getComputedStyle(document.querySelector("video")).filter, status: document.querySelector("#request-lights").getAttribute("aria-label") })');
+      mkdirSync(qaDirectory, { recursive: true });
+      writeFileSync(join(qaDirectory, 'smoke.json'), JSON.stringify({
+        report, activity, quota, edge, drag, ui, controls, bulbs, accountBadges, accountLayout,
+        social: social?.status() ?? null, native: native?.active ?? false,
+      }, null, 2));
+      const image = await window.webContents.capturePage();
+      writeFileSync(join(qaDirectory, 'pet.png'), image.toPNG());
+      if (panelWindow) {
+        await panelWindow.webContents.executeJavaScript('window.scrollTo(0, 0)');
+        await new Promise(resolve => setTimeout(resolve, 100));
+        writeFileSync(join(qaDirectory, 'panel.png'), (await panelWindow.webContents.capturePage()).toPNG());
+        const panel = panelWindow;
+        await panel.webContents.executeJavaScript("window.pet.windowControl('maximize')");
+        await new Promise(resolve => setTimeout(resolve, 450));
+        const maximized = panel.isMaximized();
+        const restoreGlyph = await panel.webContents.executeJavaScript(`({
+          restoreHidden: document.querySelector('#win-restore-icon').hasAttribute('hidden'),
+          maximizeHidden: document.querySelector('#win-max-icon').hasAttribute('hidden'),
+          label: document.querySelector('#win-maximize').getAttribute('aria-label'),
+        })`);
+        await panel.webContents.executeJavaScript("window.pet.windowControl('maximize')");
+        await new Promise(resolve => setTimeout(resolve, 450));
+        writeFileSync(join(qaDirectory, 'window-chrome.json'), JSON.stringify({
+          maximized, restored: !panel.isMaximized(), glyphWhileMaximized: restoreGlyph,
+        }, null, 2));
+      }
+    };
+    finish().catch(error => {
+      mkdirSync(qaDirectory, { recursive: true });
+      writeFileSync(join(qaDirectory, 'smoke-error.txt'),
+        error instanceof Error ? error.stack ?? error.message : String(error));
+      console.error(error);
+    }).finally(() => app.quit());
   }, 27000);
 }
 
 app.on('window-all-closed', () => {});
 app.on('before-quit', () => {
   for (const timer of timers) clearInterval(timer);
+  stopMoveLoop();
   social?.stop();
   scripts?.stop();
   native?.close();
