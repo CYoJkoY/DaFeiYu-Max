@@ -10,6 +10,9 @@ import type {
 import type { PluginsRuntimeStatus } from './globals.d.ts';
 
 const api = window.pet;
+// macOS keeps its native traffic lights and hides our caption strip controls;
+// the attribute is what the stylesheet keys off.
+document.documentElement.dataset.platform = api.platform;
 let catalog: Catalog;
 let lastQuota: Quota | null = null;
 let settings: PetSettings | null = null;
@@ -471,6 +474,16 @@ function setNote(message: string): void {
   document.querySelector('#social-note')!.textContent = message;
 }
 
+/** Swap the maximize glyph for the restore glyph and keep the label honest. */
+function renderWindowState(maximized: boolean): void {
+  const button = document.querySelector<HTMLButtonElement>('#win-maximize');
+  if (!button) return;
+  document.querySelector<SVGElement>('#win-max-icon')!.toggleAttribute('hidden', maximized);
+  document.querySelector<SVGElement>('#win-restore-icon')!.toggleAttribute('hidden', !maximized);
+  button.setAttribute('aria-label', maximized ? '还原窗口' : '最大化');
+  button.title = maximized ? '还原窗口' : '最大化';
+}
+
 function filterActions(): void {
   const query = document.querySelector<HTMLInputElement>('#search')!.value.trim().toLowerCase();
   const container = document.querySelector<HTMLElement>('#actions')!;
@@ -529,6 +542,15 @@ document.querySelector<HTMLButtonElement>('#interests-save')!.onclick = () => {
   setNote(`已保存 ${interests.length} 个兴趣关键词。`);
 };
 
+document.querySelector<HTMLButtonElement>('#win-minimize')!.onclick = () => api.windowControl('minimize');
+document.querySelector<HTMLButtonElement>('#win-maximize')!.onclick = () => api.windowControl('maximize');
+document.querySelector<HTMLButtonElement>('#win-close')!.onclick = () => api.windowControl('close');
+// Double-clicking the drag strip is the familiar "maximize" gesture.
+document.querySelector<HTMLElement>('#titlebar')!.ondblclick = event => {
+  if ((event.target as HTMLElement).closest('.window-controls')) return;
+  api.windowControl('maximize');
+};
+
 document.querySelector<HTMLButtonElement>('#market-refresh')!.onclick = async () => {
   const button = document.querySelector<HTMLButtonElement>('#market-refresh')!;
   button.disabled = true;
@@ -564,6 +586,7 @@ api.on('settings', value => {
 });
 api.on('social', value => renderSocial(value as SocialReport));
 api.on('plugins-runtime', value => renderMarket(value as PluginsRuntimeStatus));
+api.on('window-state', value => renderWindowState((value as { maximized?: boolean } | null)?.maximized === true));
 api.on('catalog', value => {
   const update = value as CatalogUpdate;
   catalog = update.catalog;
@@ -580,6 +603,7 @@ void api.getSnapshot().then(snapshot => {
   renderPlugins(snapshot.plugins, snapshot.theme);
   void api.pluginsRuntimeStatus().then(renderMarket);
   filterActions();
+  void api.windowState().then(state => renderWindowState(state?.maximized === true));
 });
 
 setInterval(() => { if (lastQuota) renderQuota(lastQuota); }, 30000);
