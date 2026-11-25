@@ -1,39 +1,30 @@
-# 决策记录：界面运行时为什么保留 Electron
+# 决策记录：界面运行时改为 Flutter
 
-状态：已采纳（2026-11）
-
-## 背景
-
-有提议把界面整体迁移到 Flutter，理由是动画与窗口交互会更顺滑，同时希望窗口的最小化 / 最大化 / 关闭按钮不再使用系统标题栏，而是自绘一套更贴合角色画风的控件。
+状态：已采纳（2026-11-25）。取代本文末尾 2026-11 早些时候「保留 Electron」的结论。
 
 ## 决策
 
-1. 两个需求分开处理。**自绘窗口按钮立刻做**，因为它是纯前端改动，两个平台共用一份代码。
-2. **不整体迁移到 Flutter**。改为在 Electron 里做定点性能优化，并把可验证的优化项写进本文档，方便后续逐条推进。
+界面运行时整体迁移到 Flutter：桌宠窗口、面板、动画播放、请求灯泡、额度徽章与窗口按钮由同一份 Dart 代码绘制，Windows x64 与 Apple Silicon macOS 共用 `lib/`，平台差异只留在应用数据目录、托盘外观、打开 Magpie 的路径与打包签名。
 
-## 为什么不是 Flutter
+## 为什么改
 
-- 仓库红线是「单一共享代码库，源码语言只有 TypeScript + Zig」。`tests/distribution.test.ts` 会扫描整个仓库，出现 `.dart` 等扩展名即失败。迁移 Flutter 等于推翻这条已落地的约束，并把两端打包、签名、托盘、Magpie 读取路径全部重写。
-- Magpie 页面是纯 HTML + CSS 静态页，由 Magpie 宿主直接加载。宠物窗口与面板窗口也共用同一套 DOM/CSS 视觉资产（角色动画是 WebM，按 CSS 滤镜调色）。
-- 脚本插件 ABI（`sdk/dfy.zig` + `src/plugins/script/*`）以 WebView/Worker 侧 JSON 意图为契约，宿主负责全部 I/O。换渲染引擎要重新定义这一层契约并重写插件生态。
-- Windows x64 与 macOS arm64 的 CI 打包流程（`scripts/package.ts`、`verify-archives.ts`）是按 Electron 产物写的。
-- 结论：迁移成本远超收益，且会同时破坏「两端同一份 UI」这条产品前提。
+- 自绘窗口按钮是明确的产品要求。Electron 要做到「标题栏、最小化、最大化、关闭全由应用画」仍要绕开系统窗口装饰，而 Flutter 的 `window_manager` + 自绘标题栏是清爽的原生路径，两个平台行为一致。
+- 透明桌宠窗口与逐帧动画对合成路径敏感。Flutter 直接给出 `RepaintBoundary` 截图与稳定的 Skia 合成，不必再担心 CSS 滤镜、`backdrop-filter` 与视频层透明带来的边缘杂色。
+- 迁移后仓库同时少掉 Node 与 Zig 两套工具链：构建、测试、打包都只剩 `flutter`，CI 配置与本地环境大幅变短。
+- 插件生态（WASM 沙箱、市场、社交摘要）本来就没有在用户侧形成依赖，迁移期先收敛这部分能力，代价可控。
 
-## 顺滑度改进清单（电子方案内）
+## 代价
 
-已做：
+- Flutter 桌面端需要 Visual Studio（Windows）与 Xcode（macOS，插件全部是 Swift Package，不需要 CocoaPods）才能打包；CI 的两个打包任务因此更重。
+- 脚本插件运行时、插件市场与社交摘要尚未迁移：面板保留入口但标注「未开放」/「未启用」，仓库不再附带 Zig SDK 与 WASM 示例。
+- 上一版按 DOM/CSS 写成的视觉细节需要在 Dart 里逐项重画，包括 106 段 WebP 动画的播放与调色。
+- 仓库红线从「TypeScript + Zig」改为「Dart + 静态 HTML/CSS」；`test/distribution_test.dart` 相应重写，`windows/`、`macos/` 的宿主外壳在扫描时跳过。
 
-- 拖拽 / 惯性循环改为按需启动：静止时不再每 16 ms 轮询一次鼠标位置，减少后台唤醒。
-- 面板滚动条改为细滚动条，避免与自绘标题栏在视觉上打架。
-- 标题栏拖拽区使用 `-webkit-app-region: drag`，按钮区 `no-drag`，拖动由合成器处理而不是 JS 逐帧 `setPosition`。
+## 历史：当初为什么保留 Electron
 
-待评估（需实测帧时间后再决定，不写在发布说明里当已完成的成果）：
-
-- 宠物窗口的 `transparent: true` + 每帧重绘 WebM 的合成开销：评估是否给视频层加 `will-change: opacity`、避免触发布局抖动。
-- 面板 `backdrop-filter` 在低端机上的代价：必要时降级为纯色背景。
-- 高频 `executeJavaScript` 诊断只在 smoke 测试中启用，运行时不保留。
+2026-11 早些时候的结论是「自绘按钮立刻做，整体迁移不做」。当时的理由是：仓库红线限定 TypeScript + Zig；Magpie 页面与两个窗口共用 DOM/CSS 视觉资产；脚本插件 ABI 以 WebView/JSON 意图为契约；打包流程按 Electron 产物写成。这四条都成立，只是产品把「界面流畅度与窗口控件可定制」排到了更高优先级，因此用一次完整迁移换掉这些约束，而不是在 Electron 里做局部优化。
 
 ## 影响
 
-- 用户可见的变化是自绘标题栏与更安静的拖拽，不需要新的运行时依赖。
-- 后续若真要评估 Flutter，应先改仓库红线与 CI，而不是先写 UI。
+- 用户可见变化：窗口按钮与标题栏完全由应用绘制，面板与桌宠的透明边缘更干净，安装包不再携带 Electron 运行时。
+- 维护者需要按 `AGENTS.md` 的新命令工作；发布流程改为 `flutter build` 产出同样的两个 ZIP 名称。

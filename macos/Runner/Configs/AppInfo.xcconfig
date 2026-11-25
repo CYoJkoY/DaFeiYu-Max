@@ -1,0 +1,17 @@
+// Application-level settings for the Runner target.
+//
+// This may be replaced with something auto-generated from metadata (e.g., pubspec.yaml) in the
+// future. If not, the values below would default to using the project name when this becomes a
+// 'flutter create' template.
+
+// The application's name. By default this is also the title of the Flutter window.
+// The on-disk bundle stays ASCII so the build path is stable; the name a person
+// sees comes from CFBundleDisplayName (蓝色大肥鱼) in Info.plist, and the release
+// archive renames the .app to match.
+PRODUCT_NAME = BlueDaFeiYu
+
+// The application's bundle identifier. macOS builds are ad-hoc signed only.
+PRODUCT_BUNDLE_IDENTIFIER = local.blue-dafeiyu.codex
+
+// The copyright displayed in application information
+PRODUCT_COPYRIGHT = Copyright © 2026 magpie-DaFeiYu contributors. MIT licensed code; artwork non-commercial.

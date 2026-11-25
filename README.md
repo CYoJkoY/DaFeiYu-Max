@@ -1,12 +1,8 @@
 <div align="center">
 
-<a href="https://cdn.jsdelivr.net/gh/wolfvoid/magpie-DaFeiYu@4d6a3f283c992819e9a16406af35064b56aaa97e/docs/media/promo.mp4"><img src="docs/media/promo-preview.gif" alt="点击播放 magpie-DaFeiYu 中文配音宣传片，时长 39 秒" width="800"></a>
+<img src="docs/images/desktop.png" alt="magpie-DaFeiYu：左侧是桌宠窗口，右侧是自绘标题栏的陪伴面板" width="820">
 
-[▶ 播放宣传片（39 秒 · 中文配音）](https://cdn.jsdelivr.net/gh/wolfvoid/magpie-DaFeiYu@4d6a3f283c992819e9a16406af35064b56aaa97e/docs/media/promo.mp4) · [下载 MP4](https://github.com/wolfvoid/magpie-DaFeiYu/raw/refs/heads/main/docs/media/promo.mp4)
-
-<img src="docs/images/desktop.png" alt="magpie-DaFeiYu：蓝色大肥鱼、请求灯泡与多账号额度" width="520">
-
-*演示图为合成账号与额度。角色动画来自 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet)。*
+*截图为 0.1.8 在 Windows 上的实机渲染：左边是桌宠（动画、额度徽章、导航条），右边是面板（标题栏与最小化 / 最大化 / 关闭按钮由 Flutter 自绘），额度数值取自运行机器本机的 Magpie。角色动画来自 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet)。*
 
 # 🐋 magpie-DaFeiYu
 
@@ -17,7 +13,8 @@
 ![Windows 10+ x64](https://img.shields.io/badge/Windows-10%2B%20x64-426B9A)
 ![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-4C78A8)
 ![Magpie](https://img.shields.io/badge/Magpie-local%20integration-C7475C)
-![Version](https://img.shields.io/badge/version-0.1.7-4C78A8)
+![Flutter](https://img.shields.io/badge/Flutter-Dart-4C78A8)
+![Version](https://img.shields.io/badge/version-0.1.8-4C78A8)
 ![Code MIT](https://img.shields.io/badge/code-MIT-538476)
 ![Artwork noncommercial](https://img.shields.io/badge/artwork-noncommercial-D19A35)
 
@@ -28,6 +25,8 @@
 一只住在桌边的蓝色大肥鱼——Windows 和 Mac 都住得下。请求进来时亮起小灯泡，额度快用完时直接摆在眼前，空闲时吃饭、施法、放烟花——**让 Magpie 的状态不用再开面板确认。**
 
 不需要 DSH，也不绑定 Codex。只要请求经过本机 Magpie，桌宠就能跟着忙起来。
+
+从 0.1.8 起，界面由 Electron 重写为 Flutter：两个平台继续共用同一份 Dart 代码，动画与透明窗口交给 Flutter 引擎绘制，最小化 / 最大化 / 关闭按钮也由应用自己画，不再借用系统标题栏。
 
 > **Magpie 插件说明 · About the Magpie plugin**
 >
@@ -45,6 +44,7 @@
 | 👥 **额度逐条可控** | 每个额度窗口可单独决定是否显示在桌宠上；徽章带供应商 logo，并在数量较多时自动换行。 |
 | 🎬 **106 段动作，不只会待机** | 吃饭、玩耍、魔术、施法、烟花都有；避开最近 15 个动作，降低重复感。 |
 | 🖐 **真的能放在桌边** | 可拖动、甩动弹跳、贴边摆放；允许动作越出屏幕，不再被透明窗口卡在中间。 |
+| 🪟 **窗口按钮自己画** | 面板标题栏与最小化 / 最大化 / 关闭按钮都是应用内控件，配色跟着角色走，换主题不用迁就系统。 |
 | 🔒 **只看本机，不碰聊天** | 只读 Magpie 的本地状态；不调用模型、不读 Codex 数据库、不保存账号邮箱或提示词。 |
 
 底栏只有三件事：**换动作、暂停/继续、更多**。两个平台都默认不开机启动，也不需要登录任何第三方账号。Windows 版解压即用，不写入安装目录。
@@ -53,12 +53,12 @@
 
 ### 直接用 App（推荐）
 
-先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.7-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.7-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
+先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.8-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.8-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
 
 **Windows 10+ x64**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.7-Windows-x64.zip` 并解压。
-2. 进入解压后的 `蓝色大肥鱼-win32-x64` 文件夹，双击 `BlueDaFeiYu.exe`。压缩包不含安装器，应用可从任意文件夹直接运行。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.8-Windows-x64.zip` 并解压到任意文件夹。
+2. 双击其中的 `BlueDaFeiYu.exe`。压缩包不含安装器，应用可从任意文件夹直接运行。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)。
 
 Windows 版没有代码签名。若 SmartScreen 拦截，请先核对下载来源，再选择继续运行；不要关闭系统安全防护。
@@ -67,7 +67,7 @@ Windows 版没有代码签名。若 SmartScreen 拦截，请先核对下载来�
 
 **macOS（Apple Silicon）**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.7-macOS-arm64.zip`。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.8-macOS-arm64.zip`。
 2. 解压后把「蓝色大肥鱼.app」拖进「应用程序」，再从菜单栏打开。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)，请求灯泡和额度会自动接入。
 
@@ -85,18 +85,36 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 
 安装后，Magpie 侧边栏会出现「蓝色大肥鱼」使用页。**页面不会自动安装或启动桌面 App**，桌面悬浮窗仍需按上面的说明下载对应系统的 ZIP。页面是纯 HTML + CSS，右上角可切换中文 / EN，默认中文，不加载任何脚本。
 
-### 开发与验证
+## 开发与验证
 
-本地开发需要 Node.js 24+、npm 和 Git。构建、图标生成、素材下载、测试与应用打包都是 TypeScript 脚本（`npm run build` / `assets` / `package`，即 `node scripts/*.ts`），发布时也由 GitHub Actions 执行，不要求本地安装 Python 或其他语言的工具链。原生能力由 Zig 编写的 `native/src/petkit.zig` 提供，`zig build test` 纳入 CI。动画由 CI 从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。
+需要 Flutter 3.50+（Dart 3.14+）与 Git；Windows 需要 Visual Studio 的「使用 C++ 的桌面开发」，macOS 只需要 Xcode（插件全部走 Swift Package Manager，不需要 CocoaPods）。两端命令一致：
 
-`npm run icons` 从 `assets/brand/` 的 PNG 母版生成 `assets/app-icon.png`、`assets/app-icon.ico`、`assets/app-icon.icns`、`magpie/icon.png` 与托盘图标；这些产物随仓库提交，Windows 打包用 ICO、macOS 打包用 ICNS。
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter run -d windows   # macOS 用 -d macos
+```
 
-仓库里没有 JavaScript 源文件或生成物：`magpie/` 只是静态 HTML + CSS，宿主按原样加载，不经过 `npm run build`。`tests/distribution.test.ts` 会扫描整个仓库，出现 `.js`/`.cjs`/`.mjs`/`.py`/`.ps1` 等禁用扩展名，或语言集合不再是 TypeScript + Zig 时就会失败；应用运行时所需的 `dist/*.cjs`、`dist/*.js` 只是 Electron 要求的构建产物，不入库。
+打包：`flutter build windows --release`、`flutter build macos --release`，CI 在两个平台各跑一次。106 段角色的 WebP 动画直接随仓库提供，构建时不需要联网下载素材。
+
+应用图标（`assets/app-icon.png`、`assets/app-icon.ico`、`assets/app-icon.icns`）和托盘图标随仓库提交：Windows 外壳用 `windows/runner/resources/app_icon.ico`，macOS 用 `macos/Runner/Assets.xcassets` 里的 PNG，母版是 `assets/brand/app-icon.png`。换图时用同一份母版手工重新导出这组文件。
+
+仓库里没有 JavaScript / TypeScript / Python / Zig 源文件：`magpie/` 只是静态 HTML + CSS，宿主按原样加载，不经过任何构建。`test/distribution_test.dart` 会扫描整个仓库，出现 `.js` / `.ts` / `.py` / `.ps1` 等禁用扩展名、Magpie 页面出现脚本、CI 用回 Node 或 Zig，或 `pubspec.yaml` 与 `lib/core/version.dart` 版本不同步时都会失败。`windows/` 与 `macos/` 只是 `flutter create` 生成的宿主外壳。
+
+冒烟测试先构建调试版再运行：
+
+```powershell
+flutter build windows --debug
+.\build\windows\x64\runner\Debug\BlueDaFeiYu.exe --smoke-test
+```
+
+截图与 `smoke.json` 写入 `DAFEIYU_QA_DIR` 或应用 userData 的 `qa/`，不写入安装目录，也不提交进仓库。
 
 ## 一个仓库，两个平台
 
-- 主界面、动画播放、请求灯泡、额度面板与本地 Magpie 读取共用同一份代码，Windows 与 macOS 行为一致。
-- 平台差异被限制在很窄的范围：应用数据目录、托盘图标（Windows 用 PNG、macOS 用 emoji）、打包与签名。Windows 解压即用，macOS 将 App 拖入「应用程序」。
+- 主界面、动画播放、请求灯泡、额度面板、自绘窗口按钮与本地 Magpie 读取共用同一份 `lib/` 代码，Windows 与 macOS 行为一致。
+- 平台差异被限制在很窄的范围：应用数据目录、托盘图标（Windows 用 PNG、macOS 用 emoji）、打开 Magpie 的默认路径、打包与签名。Windows 解压即用，macOS 将 App 拖入「应用程序」。
 - Magpie 本地配置沿用官方同一路径 `~/.config/magpie/settings.json`（遵循 `XDG_CONFIG_HOME`），Windows 与 macOS 一致，本应用只读取、不修改。
 - 不维护平台分支或分叉；改动先在共享代码里实现，确属平台差异的才单独处理。
 - 单元测试由 CI 在 Windows、macOS、Linux 三个平台运行；发布产物在 macOS 打包 Apple Silicon，在 Windows 打包 x64。
@@ -114,14 +132,9 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 
 每次请求都带 `Authorization: Bearer magpie-dafeiyu`，Magpie 的用量统计会把它记为本应用；如果你在 Magpie 里创建了网关 key，可以用环境变量 `MAGPIE_API_KEY` 让桌宠改用它。标出「正在使用」的账号依赖 Magpie 内部的 trace 接口，它以后可能变化；读不到时灯泡照常亮，只是不标红账号。
 
-## 插件：自己写，直接跑
+## 插件现状
 
-面板里的「插件」支持两层玩法，都和桌宠本体一样只在本机运行：
-
-- **本地编写**：写一个 `main.zig`，在面板点「安装本地插件」并选中它。应用用你机器上的 Zig 编译成 WASM，先回灌沙箱确认它能应答，再装进本地插件目录立即启用。**全程不上传。**
-- **云端市场**：在独立的 [DaFeiYu-Max-Plugins](https://github.com/CYoJkoY/DaFeiYu-Max-Plugins) 仓库挑选插件，面板里刷新后安装。下载的清单与模块会经过路径、大小与 SHA-256 三重校验，通过后才落盘。
-
-插件跑在独立的 worker 沙箱里，不能自己联网、弹窗或读写磁盘；它只能提交「意图」，由应用按清单声明的 `pet` / `bridge` / `net` 权限逐条审查后执行。仓库自带一个示例：`douyin-scroll`（刷抖音）通过本机桥接挑一条推荐念给桌宠听，不点赞、不评论、不发送。详见 [docs/plugin-market.md](docs/plugin-market.md) 与 [docs/plugins.md](docs/plugins.md)。
+0.1.7 及更早的 Electron 版本带过 Zig 脚本插件运行时、插件市场与社交摘要。Flutter 重写尚未迁移这部分能力：面板保留已安装插件的启停与节日装扮，插件市场标注「未开放」，社交摘要标注「未启用」，对应按钮不可点击。仓库也不再附带 Zig SDK、WASM 示例与插件安装脚本，等运行时迁移完成后再一起回来。
 
 ## 致谢与许可
 
@@ -140,4 +153,4 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 
 ---
 
-**magpie-DaFeiYu** is a cross-platform desktop pet for Magpie: 106 animations, live request lights, subscription quotas, API wallet balances, and a local-only privacy model. Windows 10+ x64, Apple Silicon macOS 12+.
+**magpie-DaFeiYu** is a cross-platform desktop pet for Magpie: 106 animations, live request lights, subscription quotas, API wallet balances, and a local-only privacy model. Built with Flutter for Windows 10+ x64 and Apple Silicon macOS 12+.

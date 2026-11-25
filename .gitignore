@@ -1,17 +1,34 @@
-node_modules
-dist/
-.runtime/
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+**/ephemeral/
+
+# IDE
+*.iml
+*.ipr
+*.iws
+.idea/
+*.swp
+
+# Smoke-test evidence and local runtime cargo
 qa/
-native/.zig-cache/
-native/zig-out/
-.zig-cache/
-assets/webm
-# Platform icons are generated from the brand PNG masters by `npm run icons`
-# and committed, so both the PNG and ICO artefacts ship with the repository.
+.runtime/
+# Raw upstream clips stay out of the repository; the transparent webp stage is
+# committed because the app ships it.
+assets/webm/
+# Platform icons are committed artefacts; regenerate the PNG/ICO/ICNS files by
+# hand from the brand master when the artwork changes.
 *.log
-.runtime-preview-*.png
-.DS_Store
+
+# Secrets
 .env
 .env.*
 !.env.example
 
+# OS noise
+.DS_Store
+Thumbs.db
