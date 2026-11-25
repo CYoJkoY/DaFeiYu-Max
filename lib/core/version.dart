@@ -3,7 +3,7 @@
 /// with pubspec.yaml so a release bump cannot forget one of them.
 library;
 
-const String appVersion = '0.1.8+18';
+const String appVersion = '0.1.9+19';
 
 const String appName = '蓝色大肥鱼';
 
