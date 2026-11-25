@@ -28,9 +28,6 @@ jobs:
       mode: ${{ steps.plan.outputs.mode }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
       - name: Plan release
         id: plan
         env:
@@ -42,12 +39,18 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          VERSION="$(node scripts/version.ts)"
+          FULL="$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | head -n 1 | tr -d '\r')"
+          VERSION="${FULL%%+*}"
           TAG="v$VERSION"
           echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
           if ! printf '%s' "$VERSION" | grep -Eq '^0\.1\.[0-9]+$'; then
             echo "should_release=false" >> "$GITHUB_OUTPUT"
             echo "Version $VERSION is not a 0.1.x release; nothing to do."
+            exit 1
+          fi
+          if ! grep -q "appVersion = '$FULL'" lib/core/version.dart; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "lib/core/version.dart does not report $FULL; bump both files together."
             exit 1
           fi
           if [ "$EVENT" = 'pull_request' ] || { [ "$EVENT" = 'workflow_dispatch' ] && [ "$PUBLISH_RELEASE" != 'true' ]; }; then
@@ -62,7 +65,7 @@ jobs:
           if [ "$EVENT" = 'push' ] && [ "$REF_TYPE" = 'tag' ]; then
             if [ "$REF_NAME" != "$TAG" ]; then
               echo "should_release=false" >> "$GITHUB_OUTPUT"
-              echo "Tag $REF_NAME does not match package.json version $VERSION."
+              echo "Tag $REF_NAME does not match pubspec.yaml version $VERSION."
               exit 1
             fi
             if gh api "repos/$REPOSITORY/releases/tags/$TAG" >/dev/null 2>&1; then
@@ -101,73 +104,74 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-15
-            platform: darwin
-            arch: arm64
-            petkit: petkit
-            packaged_petkit: dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app/Contents/Resources/app/dist/native/petkit
           - os: windows-latest
             platform: win32
             arch: x64
-            petkit: petkit.exe
-            packaged_petkit: dist/蓝色大肥鱼-win32-x64/resources/app/dist/native/petkit.exe
+          - os: macos-15
+            platform: darwin
+            arch: arm64
     runs-on: ${{ matrix.os }}
     env:
       RELEASE_TAG: ${{ needs.preflight.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+
+      - uses: subosito/flutter-action@v2
         with:
-          node-version: '24'
-          cache: npm
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: 0.17.1
-      - run: npm ci --ignore-scripts
-      - name: Prepare animation catalog
-        run: npm run prepare
-      - name: Download and verify animation assets
-        run: npm run assets
-      - name: Typecheck TypeScript
-        run: npm run typecheck
-      - name: Generate icons from the brand PNG masters
-        run: npm run icons
-      - name: Build Zig native sidecar (native CPU baseline)
-        working-directory: native
-        run: zig build -Doptimize=ReleaseSafe -Dcpu=baseline
-      - name: Build TypeScript into dist/
-        run: npm run build
-      - name: Run Zig tests
-        working-directory: native
-        run: zig build test
-      - name: Run TypeScript and Node tests
-        run: npm test
-      - name: Check downloaded animation assets
-        run: npm run check
-      - name: Verify petkit landed in dist/native
-        shell: bash
-        run: test -f "dist/native/${{ matrix.petkit }}"
-      - run: node scripts/package.ts --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
-      - name: Smoke-test packaged petkit
-        run: node scripts/smoke-petkit.ts --binary "${{ matrix.packaged_petkit }}"
-      - name: Verify and archive macOS app
-        if: matrix.platform == 'darwin'
-        run: |
-          test "$RELEASE_TAG" = "v$(node scripts/version.ts)"
-          APP="dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app"
-          codesign --verify --deep --strict "$APP"
-          test -f "$APP/Contents/Resources/app/assets/tray-icon.png"
-          test -x "$APP/Contents/Resources/app/dist/native/petkit"
-          ditto -c -k -X --keepParent --zlibCompressionLevel 9 "$APP" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
-          node scripts/verify-archives.ts --platform darwin "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
-      - name: Verify Windows archive
+          flutter-version: '3.50.1'
+          channel: stable
+          cache: true
+
+      - name: Download packages
+        run: flutter pub get
+
+      - name: Analyze Dart sources
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Windows app
         if: matrix.platform == 'win32'
+        run: flutter build windows --release
+
+      - name: Package portable Windows ZIP
+        if: matrix.platform == 'win32'
+        shell: pwsh
+        run: |
+          $ReleaseDir = "build/windows/x64/runner/Release"
+          if (-not (Test-Path "$ReleaseDir/BlueDaFeiYu.exe")) {
+            throw "BlueDaFeiYu.exe is missing from the Windows build."
+          }
+          $Zip = "magpie-DaFeiYu-$env:RELEASE_TAG-Windows-x64.zip"
+          if (Test-Path -LiteralPath $Zip) { Remove-Item -LiteralPath $Zip }
+          Compress-Archive -Path "$ReleaseDir/*" -DestinationPath $Zip
+          Get-Item -LiteralPath $Zip | Select-Object Name, Length
+
+      - name: Build macOS app
+        if: matrix.platform == 'darwin'
+        run: flutter build macos --release
+
+      - name: Ad-hoc sign and package macOS app
+        if: matrix.platform == 'darwin'
         shell: bash
-        run: node scripts/verify-archives.ts --platform win32 "dist/magpie-DaFeiYu-${RELEASE_TAG}-Windows-x64.zip"
+        run: |
+          set -euo pipefail
+          APP="build/macos/Build/Products/Release/BlueDaFeiYu.app"
+          test -d "$APP"
+          test "$(lipo -archs "$APP/Contents/MacOS/BlueDaFeiYu")" = "arm64"
+          STAGE="$(mktemp -d)"
+          cp -R "$APP" "$STAGE/蓝色大肥鱼.app"
+          codesign --force --deep --sign - "$STAGE/蓝色大肥鱼.app"
+          codesign --verify --deep --strict "$STAGE/蓝色大肥鱼.app"
+          ditto -c -k -X --keepParent --zlibCompressionLevel 9 \
+            "$STAGE/蓝色大肥鱼.app" \
+            "magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
+
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.platform }}-${{ matrix.arch }}
-          path: dist/*.zip
+          path: magpie-DaFeiYu-*.zip
           if-no-files-found: error
           retention-days: 7
 
@@ -186,19 +190,17 @@ jobs:
       WIN_ZIP: magpie-DaFeiYu-${{ needs.preflight.outputs.release_tag }}-Windows-x64.zip
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
       - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
-      - name: Verify and checksum both archives
+      - name: Verify archive shapes and checksum both files
         run: |
           set -euo pipefail
           test -f "dist/$MAC_ZIP"
           test -f "dist/$WIN_ZIP"
-          node scripts/verify-archives.ts "dist/$MAC_ZIP" "dist/$WIN_ZIP"
+          unzip -l "dist/$WIN_ZIP" | grep -q 'BlueDaFeiYu.exe'
+          unzip -l "dist/$MAC_ZIP" | grep -q '蓝色大肥鱼.app/Contents/MacOS/BlueDaFeiYu'
           (cd dist && sha256sum "$MAC_ZIP" "$WIN_ZIP" > SHA256SUMS.txt)
           cat dist/SHA256SUMS.txt
       - name: Publish release
