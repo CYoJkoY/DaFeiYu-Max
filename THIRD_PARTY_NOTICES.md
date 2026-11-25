@@ -14,7 +14,7 @@ Magpie 接口与集成文档：[yetone/magpie](https://github.com/yetone/magpie)
 
 ## 品牌与图标
 
-应用图标与托盘图标的母版是本项目原创绘制的 `assets/brand/app-icon.svg` 与 `assets/brand/tray-icon.svg`（及渲染出的 1024px PNG）。形象灵感来自 DeepSeek 公开品牌标志里的鲸鱼意象，并结合上游 dsh-pet 蓝发角色的配色与「大肥鱼」主题重新构图，**不是** DeepSeek 官方标志，也不代表 DeepSeek 的授权、合作或背书。`scripts/icons.ts` 只从这些母版生成 `.png`、`.ico`、`.icns` 以及 `magpie/icon.png`，仓库内不引用任何官方品牌源文件。
+应用图标与托盘图标的母版是本项目使用的 1024px PNG 角色插画（`assets/brand/app-icon.png` 与 `assets/brand/tray-icon.png`）。形象沿用上游 dsh-pet 蓝发角色与「大肥鱼」主题，并带有鲸鱼尾元素；**不是** DeepSeek 官方标志，也不代表 DeepSeek 的授权、合作或背书。`.png`、`.ico`、`.icns` 以及 `magpie/icon.png` 都由这些 PNG 母版手工导出并随仓库提交，仓库内不引用任何官方品牌源文件。
 
 此项目为独立社区工具，与 OpenAI、DeepSeek、Magpie 无官方隶属关系。仓库新增代码的 MIT 许可不覆盖第三方角色与动画素材。
 

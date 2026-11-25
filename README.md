@@ -98,6 +98,8 @@ flutter run -d windows   # macOS 用 -d macos
 
 打包：`flutter build windows --release`、`flutter build macos --release`，CI 在两个平台各跑一次。106 段角色的 WebP 动画直接随仓库提供，构建时不需要联网下载素材。
 
+应用图标（`assets/app-icon.png`、`assets/app-icon.ico`、`assets/app-icon.icns`）和托盘图标随仓库提交：Windows 外壳用 `windows/runner/resources/app_icon.ico`，macOS 用 `macos/Runner/Assets.xcassets` 里的 PNG，母版是 `assets/brand/app-icon.png`。换图时用同一份母版手工重新导出这组文件。
+
 仓库里没有 JavaScript / TypeScript / Python / Zig 源文件：`magpie/` 只是静态 HTML + CSS，宿主按原样加载，不经过任何构建。`test/distribution_test.dart` 会扫描整个仓库，出现 `.js` / `.ts` / `.py` / `.ps1` 等禁用扩展名、Magpie 页面出现脚本、CI 用回 Node 或 Zig，或 `pubspec.yaml` 与 `lib/core/version.dart` 版本不同步时都会失败。`windows/` 与 `macos/` 只是 `flutter create` 生成的宿主外壳。
 
 冒烟测试先构建调试版再运行：

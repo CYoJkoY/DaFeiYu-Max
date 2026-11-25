@@ -17,6 +17,11 @@
 # Smoke-test evidence and local runtime cargo
 qa/
 .runtime/
+# Raw upstream clips stay out of the repository; the transparent webp stage is
+# committed because the app ships it.
+assets/webm/
+# Platform icons are committed artefacts; regenerate the PNG/ICO/ICNS files by
+# hand from the brand master when the artwork changes.
 *.log
 
 # Secrets

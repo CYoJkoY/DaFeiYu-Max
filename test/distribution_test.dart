@@ -181,6 +181,44 @@ void main() {
       }
     }
   });
+
+  test('keeps both platform shells on the shared icon master', () {
+    expect(
+      File('${root.path}/assets/app-icon.png').existsSync(),
+      isTrue,
+      reason: '图标母版 assets/app-icon.png 缺失',
+    );
+
+    final masterIco = File('${root.path}/assets/app-icon.ico');
+    final windowsIcon = File(
+      '${root.path}/windows/runner/resources/app_icon.ico',
+    );
+    expect(windowsIcon.existsSync(), isTrue, reason: 'Windows 外壳图标缺失');
+    expect(
+      windowsIcon.readAsBytesSync(),
+      masterIco.readAsBytesSync(),
+      reason: 'windows/runner/resources/app_icon.ico 必须与 assets/app-icon.ico 一致',
+    );
+
+    final appIconSet = Directory(
+      '${root.path}/macos/Runner/Assets.xcassets/AppIcon.appiconset',
+    );
+    for (final size in <int>[16, 32, 64, 128, 256, 512, 1024]) {
+      expect(
+        File('${appIconSet.path}/app_icon_$size.png').existsSync(),
+        isTrue,
+        reason: 'macOS 图标缺少 $size 像素版本',
+      );
+    }
+
+    final pubspec = File('${root.path}/pubspec.yaml').readAsStringSync();
+    expect(pubspec, contains('assets/tray-icon.png'), reason: '托盘图标必须随应用打包');
+    expect(
+      File('${root.path}/lib/app/tray_service.dart').readAsStringSync(),
+      contains("'assets/tray-icon.png'"),
+      reason: '托盘服务必须加载随应用打包的 32 像素图标',
+    );
+  });
 }
 
 Directory _repoRoot() {

@@ -31,6 +31,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/catalog.json
+    - assets/tray-icon.png
+    - assets/tray-icon@2x.png
     - assets/pet/
     - assets/brand/
     - assets/provider-icons/

@@ -21,7 +21,7 @@ class TrayService with TrayListener {
   Future<void> init() async {
     trayManager.addListener(this);
     if (Platform.isWindows) {
-      await trayManager.setIcon('assets/brand/tray-icon.png', iconSize: 32);
+      await trayManager.setIcon('assets/tray-icon.png', iconSize: 32);
     } else {
       await trayManager.setTitle('🐋');
     }
