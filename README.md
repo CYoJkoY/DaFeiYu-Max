@@ -42,7 +42,7 @@
 | 💡 **几个请求，就亮几盏** | 进行中和排队的请求各有灯泡；没有请求时自动熄灭，断连变淡，不冒充“任务完成”。 |
 | 💰 **两种额度，两套读法** | 订阅账号显示剩余百分比；DeepSeek 等 API 钱包直接显示剩余金额，不再假装有百分比。 |
 | 👥 **额度逐条可控** | 每个额度窗口可单独决定是否显示在桌宠上；徽章带供应商 logo，并在数量较多时自动换行。 |
-| 🎬 **106 段动作，不只会待机** | 吃饭、玩耍、魔术、施法、烟花都有；避开最近 15 个动作，降低重复感。 |
+| 🎬 **93 段动作，不只会待机** | 吃饭、玩耍、魔术、施法、烟花都有；避开最近 15 个动作，降低重复感。 |
 | 🖐 **真的能放在桌边** | 可拖动、甩动弹跳、贴边摆放；允许动作越出屏幕，不再被透明窗口卡在中间。 |
 | 🪟 **窗口按钮自己画** | 面板标题栏与最小化 / 最大化 / 关闭按钮都是应用内控件，配色跟着角色走，换主题不用迁就系统。 |
 | 🔒 **只看本机，不碰聊天** | 只读 Magpie 的本地状态；不调用模型、不读 Codex 数据库、不保存账号邮箱或提示词。 |
@@ -96,7 +96,7 @@ flutter test
 flutter run -d windows   # macOS 用 -d macos
 ```
 
-打包：`flutter build windows --release`、`flutter build macos --release`，CI 在两个平台各跑一次。106 段角色的 WebP 动画直接随仓库提供，构建时不需要联网下载素材。
+打包：`flutter build windows --release`、`flutter build macos --release`，CI 在两个平台各跑一次。93 段角色的 WebP 动画直接随仓库提供，构建时不需要联网下载素材。
 
 应用图标（`assets/app-icon.png`、`assets/app-icon.ico`、`assets/app-icon.icns`）和托盘图标随仓库提交：Windows 外壳用 `windows/runner/resources/app_icon.ico`，macOS 用 `macos/Runner/Assets.xcassets` 里的 PNG，母版是 `assets/brand/app-icon.png`。换图时用同一份母版手工重新导出这组文件。
 
@@ -140,7 +140,7 @@ flutter build windows --debug
 
 | 来源 | 贡献 |
 | --- | --- |
-| [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) | 大肥鱼形象、106 段动画、动作配置与初始选择器；本项目最重要的视觉来源。 |
+| [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) | 大肥鱼形象、动作配置与初始选择器；本项目最重要的视觉来源（上游动画集里只有实际用到的 93 段随包分发）。 |
 | [yetone/magpie](https://github.com/yetone/magpie) | 本地模型网关，以及请求、额度、路由接口与集成文档。 |
 | [yifanlu0227/DaFeiYu-codex-pet](https://github.com/yifanlu0227/DaFeiYu-codex-pet) | 大肥鱼桌宠与安装思路的最初参考；本项目没有使用其 spritesheet。 |
 | [bianbian-666/Codex-dafeiyu](https://github.com/bianbian-666/Codex-dafeiyu) | 早期 Codex 状态联动方案参考；当前版本已改为 Magpie。 |
@@ -153,4 +153,4 @@ flutter build windows --debug
 
 ---
 
-**magpie-DaFeiYu** is a cross-platform desktop pet for Magpie: 106 animations, live request lights, subscription quotas, API wallet balances, and a local-only privacy model. Built with Flutter for Windows 10+ x64 and Apple Silicon macOS 12+.
+**magpie-DaFeiYu** is a cross-platform desktop pet for Magpie: 93 animations, live request lights, subscription quotas, API wallet balances, and a local-only privacy model. Built with Flutter for Windows 10+ x64 and Apple Silicon macOS 12+.

@@ -1,7 +1,7 @@
 name: magpie_dafeiyu
 description: 蓝色大肥鱼 · Magpie 桌宠伴侣（Flutter 桌面版）
 publish_to: 'none'
-version: 0.1.8+18
+version: 0.1.9+19
 
 environment:
   sdk: ^3.14.0
@@ -34,5 +34,4 @@ flutter:
     - assets/tray-icon.png
     - assets/tray-icon@2x.png
     - assets/pet/
-    - assets/brand/
     - assets/provider-icons/

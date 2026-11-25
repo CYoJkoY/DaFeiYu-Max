@@ -10,7 +10,10 @@ void main() {
   test('every catalog animation keeps its transparent stage', () async {
     final catalog = jsonDecode(await rootBundle.loadString('assets/catalog.json')) as Map<String, dynamic>;
     final names = (catalog['names'] as List).cast<String>();
-    expect(names, hasLength(106));
+    // 93 clips are reachable from the catalog (idle, clicks, categories,
+    // states and the drag feedback clip); the rest of the upstream set is not
+    // shipped so the portable archives stay small.
+    expect(names, hasLength(93));
     for (final name in names) {
       final bytes = await rootBundle.load('assets/pet/$name.webp');
       final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
