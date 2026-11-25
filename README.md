@@ -87,7 +87,7 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 
 ## 开发与验证
 
-需要 Flutter 3.50+（Dart 3.14+）与 Git；Windows 需要 Visual Studio 的「使用 C++ 的桌面开发」，macOS 需要 Xcode 与 CocoaPods。两端命令一致：
+需要 Flutter 3.50+（Dart 3.14+）与 Git；Windows 需要 Visual Studio 的「使用 C++ 的桌面开发」，macOS 只需要 Xcode（插件全部走 Swift Package Manager，不需要 CocoaPods）。两端命令一致：
 
 ```bash
 flutter pub get
