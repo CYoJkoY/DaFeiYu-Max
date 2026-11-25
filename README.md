@@ -89,6 +89,8 @@ magpie plugin add github:wolfvoid/magpie-DaFeiYu
 
 本地开发需要 Node.js 24+、npm 和 Git。构建、图标生成、素材下载、测试与应用打包都是 TypeScript 脚本（`npm run build` / `assets` / `package`，即 `node scripts/*.ts`），发布时也由 GitHub Actions 执行，不要求本地安装 Python 或其他语言的工具链。原生能力由 Zig 编写的 `native/src/petkit.zig` 提供，`zig build test` 纳入 CI。动画由 CI 从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。
 
+`npm run icons` 从 `assets/brand/` 的 PNG 母版生成 `assets/app-icon.png`、`assets/app-icon.ico`、`assets/app-icon.icns`、`magpie/icon.png` 与托盘图标；这些产物随仓库提交，Windows 打包用 ICO、macOS 打包用 ICNS。
+
 仓库里没有 JavaScript 源文件或生成物：`magpie/` 只是静态 HTML + CSS，宿主按原样加载，不经过 `npm run build`。`tests/distribution.test.ts` 会扫描整个仓库，出现 `.js`/`.cjs`/`.mjs`/`.py`/`.ps1` 等禁用扩展名，或语言集合不再是 TypeScript + Zig 时就会失败；应用运行时所需的 `dist/*.cjs`、`dist/*.js` 只是 Electron 要求的构建产物，不入库。
 
 ## 一个仓库，两个平台

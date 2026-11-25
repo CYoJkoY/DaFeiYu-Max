@@ -6,11 +6,8 @@ native/.zig-cache/
 native/zig-out/
 .zig-cache/
 assets/webm
-assets/app-icon.ico
-assets/app-icon.icns
-assets/app-icon.png
-assets/tray-icon.png
-assets/tray-icon@2x.png
+# Platform icons are generated from the brand PNG masters by `npm run icons`
+# and committed, so both the PNG and ICO artefacts ship with the repository.
 *.log
 .runtime-preview-*.png
 .DS_Store
