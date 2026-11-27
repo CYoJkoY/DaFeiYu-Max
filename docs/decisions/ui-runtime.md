@@ -18,7 +18,7 @@
 - Flutter 桌面端需要 Visual Studio（Windows）与 Xcode（macOS，插件全部是 Swift Package，不需要 CocoaPods）才能打包；CI 的两个打包任务因此更重。
 - 脚本插件运行时、插件市场与社交摘要尚未迁移：面板保留入口但标注「未开放」/「未启用」，仓库不再附带 Zig SDK 与 WASM 示例。
 - 上一版按 DOM/CSS 写成的视觉细节需要在 Dart 里逐项重画，包括 106 段 WebP 动画的播放与调色。
-- 仓库红线从「TypeScript + Zig」改为「Dart + 静态 HTML/CSS」；`test/distribution_test.dart` 相应重写，`windows/`、`macos/` 的宿主外壳在扫描时跳过。
+- 仓库红线从「TypeScript + Zig」先收紧到「Dart + 静态 HTML/CSS」，随后在 `languages.md` 里定稿为「Dart + Zig + TypeScript，至多三种」；`test/distribution_test.dart` 相应重写，`windows/`、`macos/` 的宿主外壳单独按生成物检查。
 
 ## 历史：当初为什么保留 Electron
 

@@ -17,6 +17,13 @@
 # Smoke-test evidence and local runtime cargo
 qa/
 .runtime/
+
+# Node / Zig 工具链的本地产物：仓库最多三种语言，Dart 直接由 Flutter 管理，
+# 这两种语言只有在明确引入时才需要，缓存一律不入库。
+node_modules/
+/dist/
+.zig-cache/
+zig-out/
 # Raw upstream clips stay out of the repository; the transparent webp stage is
 # committed because the app ships it.
 assets/webm/
@@ -32,3 +39,4 @@ assets/webm/
 # OS noise
 .DS_Store
 Thumbs.db
+desktop.ini

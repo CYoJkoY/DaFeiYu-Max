@@ -100,8 +100,6 @@ flutter run -d windows   # macOS 用 -d macos
 
 应用图标（`assets/app-icon.png`、`assets/app-icon.ico`、`assets/app-icon.icns`）和托盘图标随仓库提交：Windows 外壳用 `windows/runner/resources/app_icon.ico`，macOS 用 `macos/Runner/Assets.xcassets` 里的 PNG，母版是 `assets/brand/app-icon.png`。换图时用同一份母版手工重新导出这组文件。
 
-仓库里没有 JavaScript / TypeScript / Python / Zig 源文件：`magpie/` 只是静态 HTML + CSS，宿主按原样加载，不经过任何构建。`test/distribution_test.dart` 会扫描整个仓库，出现 `.js` / `.ts` / `.py` / `.ps1` 等禁用扩展名、Magpie 页面出现脚本、CI 用回 Node 或 Zig，或 `pubspec.yaml` 与 `lib/core/version.dart` 版本不同步时都会失败。`windows/` 与 `macos/` 只是 `flutter create` 生成的宿主外壳。
-
 冒烟测试先构建调试版再运行：
 
 ```powershell
@@ -110,6 +108,14 @@ flutter build windows --debug
 ```
 
 截图与 `smoke.json` 写入 `DAFEIYU_QA_DIR` 或应用 userData 的 `qa/`，不写入安装目录，也不提交进仓库。
+
+## 语言约定
+
+整个项目最多三种编程语言，分工不重叠：**Dart** 写界面与全部共享逻辑，**Zig** 写需要脱离 Flutter 运行时或跑进 WASM 沙箱的原生能力，**TypeScript** 写工具脚本与桥接示例。除此之外的语言——JavaScript（含 `.cjs` / `.mjs`）、Python、PowerShell、Shell / 批处理、Rust、C#、Kotlin、Ruby、Lua——都不进仓库。
+
+当前主应用是纯 Dart：仓库里没有任何 `.zig` / `.ts` 文件，构建、测试、打包都只需要 `flutter` 一条工具链；Zig 与 TypeScript 是上限，不是配额。插件仓库 `DaFeiYu-Max-Plugins` 正好用这两种语言写插件与工具脚本，与本仓库共同守住三种语言的上限。完整取舍见 [docs/decisions/languages.md](docs/decisions/languages.md)。
+
+`magpie/` 只是静态 HTML + CSS，Magpie 宿主按原样加载、不经过任何构建；这是宿主要求的页面格式，不算第四种源语言。`windows/` 与 `macos/` 里的 C++ / Swift 是 `flutter create` 生成的最小宿主外壳，是唯一允许出现的 C++ / Swift 代码。`test/distribution_test.dart` 以受版本控制的文件为基准扫描：出现第四种语言的扩展名、宿主外壳里塞进 Dart / Zig / TypeScript、Magpie 页面出现脚本、CI 的 Node / Zig 步骤与仓库实际语言不一致，或 `pubspec.yaml` 与 `lib/core/version.dart` 版本不同步，都会失败。
 
 ## 一个仓库，两个平台
 

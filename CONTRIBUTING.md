@@ -19,7 +19,9 @@ flutter test
 flutter run -d windows   # macOS 用 -d macos
 ```
 
-仓库没有 Node、npm、Zig 步骤，也没有 JavaScript / TypeScript 源文件需要构建。`windows/` 与 `macos/` 是 `flutter create` 生成的最小宿主外壳，只在确需平台能力时修改，不要往里复制共享逻辑。
+整个项目最多三种编程语言：Dart、Zig、TypeScript。Dart 写界面与共享逻辑；Zig 写需要脱离 Flutter 运行时或跑进 WASM 沙箱的原生能力；TypeScript 写工具脚本与桥接示例。除此之外的语言（JavaScript、Python、PowerShell、Shell、Rust、C#、Kotlin、Ruby 等）不要引入，取舍与例外见 [docs/decisions/languages.md](docs/decisions/languages.md)。
+
+当前主应用是纯 Dart，构建、测试、打包都只需要 `flutter`；没有 Node、npm、Zig 步骤，也不需要构建任何 JavaScript / TypeScript。只有在确实需要跨出 Dart 能力边界时才新增 Zig 或 TypeScript，并在同一次改动里补齐 CI 步骤（`setup-zig` / `setup-node`）与 `test/distribution_test.dart` 的期望。`windows/` 与 `macos/` 是 `flutter create` 生成的最小宿主外壳，只在确需平台能力时修改，不要往里复制共享逻辑，也不要往里放 `.dart` / `.zig` / `.ts` 文件。
 
 ## 提交代码
 
