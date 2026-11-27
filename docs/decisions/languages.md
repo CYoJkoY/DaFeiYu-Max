@@ -52,17 +52,7 @@
 
 ## GitHub 语言统计
 
-GitHub 的语言条按 linguist 统计，默认会把 `flutter create` 生成的 C++ / CMake / Swift 外壳和 Magpie 的 HTML / CSS 页面也算进去（本仓库曾经显示为 Dart 83.2%、C++ 8.2%、CMake 4.4%、HTML 2.1%、CSS 1%、Swift 0.8%、C 0.3%）。这些文件删不掉：Flutter 桌面端必须由 C++ / Swift 外壳启动引擎，Magpie 页面必须是静态 HTML / CSS。
-
-因此用 `.gitattributes` 把它们排除出统计，语言条只反映项目真正使用的三种语言：
-
-```
-windows/** linguist-generated linguist-vendored
-macos/** linguist-generated linguist-vendored
-magpie/** linguist-detectable=false linguist-documentation
-```
-
-这不会改变仓库内容、构建或打包，只是不让统计把生成物和页面格式当成项目语言。`test/distribution_test.dart` 会检查这三条规则仍在，并确认没有任何第三种语言的文件跑到这三个目录之外。
+GitHub 的语言条按 linguist 的默认规则统计，`windows/`、`macos/` 的宿主外壳（C++ / CMake / Swift）与 `magpie/` 的静态页面（HTML / CSS）会照原样计入。此前曾用 `.gitattributes` 的 linguist 规则把它们排除出统计，现已按维护者要求移除这些规则，语言条如实展示仓库的文件构成；`test/distribution_test.dart` 不再检查任何 linguist 排除规则。
 
 ## 代价
 

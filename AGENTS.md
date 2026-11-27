@@ -19,7 +19,7 @@
 - `windows/` 与 `macos/` 里的 C++ / Swift 是 `flutter create` 生成的最小宿主外壳，是唯一允许出现第三种语言的代码，只做窗口与打包胶水：不许往里面塞共享逻辑，也不许出现 `.dart` / `.zig` / `.ts` 文件。宿主外壳出现其他语言时，先确认它是不是 `flutter create` 的产物。
 - Magpie 页面只有 `index.html` + `page.css`（`magpie/`）：这是 Magpie 宿主按原样加载的静态页面格式，属于接口约定而不是第四种源语言，语言用单选按钮配合 CSS 切换，默认中文。页面不得出现 `<script`、内联事件、`javascript:` 或任何脚本产物；Magpie 页面不参与应用打包。
 - `test/distribution_test.dart` 以 `git ls-files`（受版本控制的文件）为基准检查语言红线：出现 `.js` / `.cjs` / `.mjs` / `.py` / `.ps1` / `.sh` / `.bat` / `.rs` / `.cs` / `.kt` / `.rb` / `.swift` / `.c` / `.cpp` 等第四种语言、宿主外壳里出现 Dart / Zig / TypeScript、Magpie 页面出现脚本、CI 的 Node / Zig 步骤与仓库实际语言不一致、文档没写明三种语言上限，或 `pubspec.yaml` 与 `lib/core/version.dart` 版本不同步，都会失败。
-- GitHub 仓库页的语言统计（linguist）同样只展示这三种语言：`.gitattributes` 把 `windows/`、`macos/` 标成 `linguist-generated linguist-vendored`，把 `magpie/` 标成 `linguist-detectable=false linguist-documentation`。这三处是 `flutter create` 生成的宿主外壳和 Magpie 宿主按原样加载的静态说明页面，删不掉也不该删（Flutter 桌面端与 Magpie 页面都离不开它们），所以只在统计里排除；不要为了「让语言条好看」去改动或删除这些文件，也不要新增其他目录来藏代码。
+- 不要用 `.gitattributes` 的 linguist 规则去操控 GitHub 语言条：`windows/`、`macos/` 与 `magpie/` 里的宿主外壳和页面文件照原样计入统计，不要为了「让语言条好看」去改动、删除这些文件或新增目录来藏代码。
 - 同级插件仓库 `DaFeiYu-Max-Plugins` 共用这条上限，只用 Zig 与 TypeScript，并由它自己的 `scripts/check-languages.ts` 在 CI 里守住。
 - 完整取舍、现状盘点与例外清单见 `docs/decisions/languages.md`。
 

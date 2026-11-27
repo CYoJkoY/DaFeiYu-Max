@@ -117,7 +117,7 @@ flutter build windows --debug
 
 `magpie/` 只是静态 HTML + CSS，Magpie 宿主按原样加载、不经过任何构建；这是宿主要求的页面格式，不算第四种源语言。`windows/` 与 `macos/` 里的 C++ / Swift 是 `flutter create` 生成的最小宿主外壳，是唯一允许出现的 C++ / Swift 代码。`test/distribution_test.dart` 以受版本控制的文件为基准扫描：出现第四种语言的扩展名、宿主外壳里塞进 Dart / Zig / TypeScript、Magpie 页面出现脚本、CI 的 Node / Zig 步骤与仓库实际语言不一致，或 `pubspec.yaml` 与 `lib/core/version.dart` 版本不同步，都会失败。
 
-GitHub 仓库页的语言条因此只显示 Dart（以及将来引入时的 Zig / TypeScript）：`.gitattributes` 用 linguist 规则把 `windows/`、`macos/`（`flutter create` 宿主外壳）和 `magpie/`（静态说明页面）排除在统计之外。这只是让统计反映项目真正使用的语言，文件本身照旧保留。
+GitHub 仓库页的语言条按 linguist 的默认规则统计，`windows/`、`macos/` 的宿主外壳与 `magpie/` 的页面会照原样计入，不做任何排除或隐藏。
 
 ## 一个仓库，两个平台
 
