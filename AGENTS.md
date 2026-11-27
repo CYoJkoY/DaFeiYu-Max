@@ -53,5 +53,6 @@ flutter build macos --debug   # 或 --release
 
 - 保持中文语气与现有视觉资产；角色动画来自 PC2005-cloud/dsh-pet，非商用，展示与分发须保留来源。
 - Magpie 页面必须保留「不会自动安装或启动桌宠」说明与 `releases/latest` 链接；压缩包要与系统匹配。
-- 脚本插件运行时与插件市场尚未迁移到 Flutter 版本：面板文案要如实说明当前限制，不要描述本仓库已经删掉的 Zig / WASM 能力。
+- 插件市场已经接进 Flutter 版：面板会读取同级插件仓库 `DaFeiYu-Max-Plugins` 的 `index.json`，按索引下载清单与模块，校验大小与 SHA-256 后才落盘，并支持卸载。脚本插件**运行时**仍未接入，所以面板文案必须写明「安装与校验可用、插件不会被加载或执行」，不要描述本仓库已经删掉的 Zig / WASM 执行能力。
+- 市场契约（索引字段、校验顺序、来源记录文件）写在 `docs/plugin-market.md`；改索引格式时同步修改 `lib/core/market.dart` 的 `marketSchemaVersion`，不要单方面放宽校验。
 - 插件侧源码（Zig 插件、`sdk/dfy.zig`、TypeScript 工具脚本）维护在同级的 `DaFeiYu-Max-Plugins` 仓库；那是 Zig + TypeScript，本仓库不复制它的源码，也不因此引入新的语言。

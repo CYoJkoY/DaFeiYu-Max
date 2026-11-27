@@ -59,3 +59,4 @@ GitHub 的语言条按 linguist 的默认规则统计，`windows/`、`macos/` �
 - 主应用眼下没有 Zig / TypeScript，如果将来要补原生能力，需要同时改 CI 与语言测试，改动面比「随手写个脚本」大。
 - Zig 工具链版本被钉在插件仓库（0.17.1），主应用引入时要注意对齐。
 - 文档必须跟着语言策略走：清掉「仓库没有 TypeScript / Zig」这类旧表述，否则测试会直接失败。
+- 插件市场（[plugin-market.md](../plugin-market.md)）是用 Dart 写的：读索引、校验、下载与落盘都在 `lib/core/market.dart` 与 `lib/app/market_client.dart`，没有为了市场重新引入 Node 或 Zig。只有脚本插件运行时回来时才需要 Zig，届时按上面的流程补 CI 与测试期望。

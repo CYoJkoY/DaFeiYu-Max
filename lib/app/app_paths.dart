@@ -35,4 +35,8 @@ class AppPaths {
   static File get settingsFile => File(p.join(userData.path, 'settings.json'));
   static File get instanceFile => File(p.join(userData.path, 'instance.port'));
   static Directory get pluginsDirectory => Directory(p.join(userData.path, 'plugins'));
+
+  /// Records which plugins came from the marketplace, so the app only updates
+  /// or removes the ones it installed itself.
+  static File get marketProvenanceFile => File(p.join(userData.path, 'plugin-market.json'));
 }

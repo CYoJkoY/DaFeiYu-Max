@@ -14,6 +14,12 @@ class MarketSettings {
   final String ref;
   final int? lastSync;
 
+  MarketSettings copyWith({String? repo, String? ref, int? lastSync, bool clearLastSync = false}) => MarketSettings(
+    repo: repo ?? this.repo,
+    ref: ref ?? this.ref,
+    lastSync: clearLastSync ? null : (lastSync ?? this.lastSync),
+  );
+
   Map<String, Object?> toJson() => {'repo': repo, 'ref': ref, 'lastSync': lastSync};
 
   static MarketSettings fromJson(Object? value) {
@@ -50,6 +56,20 @@ class PluginSettings {
   final Map<String, bool> enabled;
   final Map<String, ScriptPluginSelection> scripts;
   final MarketSettings market;
+
+  PluginSettings copyWith({
+    String? appearance,
+    bool clearAppearance = false,
+    Map<String, bool>? enabled,
+    Map<String, ScriptPluginSelection>? scripts,
+    MarketSettings? market,
+  }) =>
+      PluginSettings(
+        appearance: clearAppearance ? null : (appearance ?? this.appearance),
+        enabled: enabled ?? this.enabled,
+        scripts: scripts ?? this.scripts,
+        market: market ?? this.market,
+      );
 
   Map<String, Object?> toJson() => {
     'appearance': appearance,

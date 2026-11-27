@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/app_controller.dart';
 import '../app/plugin_registry.dart';
 import '../core/catalog.dart';
+import '../core/market.dart';
 import '../core/quota_display.dart';
 import '../core/types.dart';
 import '../core/version.dart';
@@ -503,7 +504,7 @@ class _PanelViewState extends State<PanelView> {
         view.entries.where((entry) => entry.manifest.kind == 'appearance').toList();
     final externals = view.entries.where((entry) => entry.manifest.source == 'external').length;
     final rows = view.entries
-        .where((entry) => entry.manifest.kind != 'appearance' && entry.manifest.kind != 'script')
+        .where((entry) => entry.manifest.kind != 'appearance')
         .toList();
     return PanelCard(
       child: Column(
@@ -532,8 +533,9 @@ class _PanelViewState extends State<PanelView> {
           if (view.issues.isNotEmpty)
             PanelNote('有 ${view.issues.length} 个外部插件未加载：${view.issues.join('；')}', error: true),
           const PanelNote(
-            '外部插件是放在应用数据目录 plugins/ 下的声明式 JSON，只扩展已内置的社交适配器、'
-            '动作外观或节日装扮；可写入的社交平台仍需在下方逐项启用，并在发送前逐条确认。',
+            '外部插件放在应用数据目录 plugins/ 下：声明式 JSON 只扩展已内置的社交适配器、'
+            '动作外观或节日装扮；从市场装进来的脚本插件会随清单一起校验，但本版没有脚本运行时，'
+            '它们只会列在这里，不会被执行。可写入的社交平台仍需在下方逐项启用，并在发送前逐条确认。',
           ),
         ],
       ),
@@ -572,8 +574,9 @@ class _PanelViewState extends State<PanelView> {
                       manifest.name,
                       style: uiText(size: 12, weight: FontWeight.w600, color: const Color(0xFF425D80)),
                     ),
-                    Badge(manifest.kind == 'social' ? '社交' : '节日'),
+                    Badge(_kindLabel(manifest.kind)),
                     if (manifest.source == 'external') const Badge('外部'),
+                    if (manifest.kind == 'script') Badge(entry.state),
                     if (entry.active)
                       Badge(
                         '生效中',
@@ -605,29 +608,167 @@ class _PanelViewState extends State<PanelView> {
                 ),
               ),
             ),
+          if (manifest.kind == 'script' && manifest.source != 'builtin')
+            Padding(
+              padding: const EdgeInsets.only(left: 10, top: 2),
+              child: PanelButton(
+                label: '卸载',
+                flat: true,
+                enabled: !controller.marketBusy,
+                onTap: () => controller.uninstallMarketPlugin(manifest.id),
+              ),
+            ),
         ],
       ),
     );
   }
 
+  String _kindLabel(String kind) => switch (kind) {
+    'social' => '社交',
+    'festival' => '节日',
+    'script' => '脚本',
+    _ => '其他',
+  };
+
   Widget _marketCard() {
+    final entries = controller.marketIndex?.plugins ?? const <MarketEntry>[];
+    final market = controller.settings.plugins.market;
+    final badge = controller.marketBusy
+        ? '同步中'
+        : controller.marketIndex == null
+            ? '未同步'
+            : '${entries.length} 个插件';
     return PanelCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PanelSectionHeader(title: '插件市场', trailing: Badge('未开放')),
-          const PanelNote('脚本插件运行时尚未迁移到 Flutter 版本：本版保留已安装插件的启停与节日装扮，暂不提供插件安装与市场刷新。'),
+          PanelSectionHeader(title: '插件市场', trailing: Badge(badge)),
+          PanelNote(
+            '市场就是 ${market.repo} 这个普通 GitHub 仓库：读取 ${market.ref} 分支的 index.json，'
+            '按索引下载清单与模块，逐一校验大小与 SHA-256，全部通过才写入应用数据目录的 plugins/。'
+            '${_marketStampNote(market.lastSync)}',
+          ),
+          if (controller.marketIndex == null)
+            const PanelNote('还没有同步过市场。点「刷新市场」读取索引，之后这里会列出可安装的插件。'),
+          for (final entry in entries) _marketRow(entry),
+          if (controller.marketError != null) PanelNote(controller.marketError!, error: true),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              PanelButton(label: '刷新市场', flat: true, enabled: false, onTap: null),
+              PanelButton(
+                label: '打开市场仓库',
+                flat: true,
+                onTap: controller.openMarketRepository,
+              ),
+              PanelButton(
+                label: '刷新市场',
+                flat: true,
+                top: 0,
+                enabled: !controller.marketBusy,
+                onTap: controller.refreshMarket,
+              ),
             ],
           ),
-          const PanelNote('恢复后会继续按 SHA-256 校验清单与模块，通过后才落盘；未签名的脚本插件启用前仍需确认来源。'),
+          const PanelNote(
+            '当前限制：安装、校验与卸载已经可用，但 Flutter 版还没有接入脚本运行时，'
+            '所以已安装的脚本插件只会出现在「外观与插件」列表里，不会被加载或执行。'
+            '市场里的插件都是未签名的，接入运行时前仍需你确认来源。',
+          ),
         ],
       ),
     );
   }
+
+  String _marketStampNote(int? lastSync) {
+    if (lastSync == null) return '';
+    final stamp = DateTime.fromMillisecondsSinceEpoch(lastSync);
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '上次同步：${stamp.year}-${two(stamp.month)}-${two(stamp.day)} ${two(stamp.hour)}:${two(stamp.minute)}。';
+  }
+
+  Widget _marketRow(MarketEntry entry) {
+    final installed = controller.registry.installedVersion(entry.id);
+    final busy = controller.marketBusy;
+    final outdated = installed != null && installed != entry.version;
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: 10),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Palette.hairline, style: BorderStyle.solid)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      entry.displayName,
+                      style: uiText(size: 12, weight: FontWeight.w600, color: const Color(0xFF425D80)),
+                    ),
+                    Badge('v${entry.version}'),
+                    if (installed != null) Badge('已安装 v$installed'),
+                    for (final permission in entry.permissions) Badge(_permissionLabel(permission)),
+                  ],
+                ),
+                if (entry.description.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '${entry.author} · ${entry.description}',
+                      style: uiText(size: 11, color: Palette.muted, height: 1.7),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10, top: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (installed == null)
+                  PanelButton(
+                    label: '安装',
+                    primary: true,
+                    enabled: !busy,
+                    onTap: () => controller.installMarketPlugin(entry.id),
+                  )
+                else ...[
+                  if (outdated)
+                    PanelButton(
+                      label: '更新到 v${entry.version}',
+                      primary: true,
+                      enabled: !busy,
+                      onTap: () => controller.installMarketPlugin(entry.id),
+                    ),
+                  PanelButton(
+                    label: '卸载',
+                    flat: true,
+                    enabled: !busy,
+                    onTap: () => controller.uninstallMarketPlugin(entry.id),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _permissionLabel(String permission) => switch (permission) {
+    'pet' => '宠物',
+    'bridge' => '桥接',
+    'net' => '联网',
+    _ => permission,
+  };
 
   Widget _socialCard() {
     return PanelCard(

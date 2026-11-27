@@ -14,11 +14,14 @@ import 'package:window_manager/legacy.dart' as wm;
 import '../core/animation.dart';
 import '../core/catalog.dart';
 import '../core/magpie.dart';
+import '../core/market.dart';
 import '../core/quota_display.dart';
 import '../core/settings.dart';
 import '../core/types.dart';
 import '../core/version.dart';
 import '../ui/theme.dart';
+import 'app_paths.dart';
+import 'market_client.dart';
 import 'plugin_registry.dart';
 import 'settings_store.dart';
 import 'tray_service.dart';
@@ -44,6 +47,13 @@ class AppController extends ChangeNotifier with wm.WindowListener implements Win
   late PluginRegistry registry;
   late PluginView pluginView;
   late final WindowService window = WindowService(delegate: this);
+
+  /// The plugin marketplace, published as a plain GitHub repository.
+  final MarketClient market = MarketClient();
+  MarketIndex? marketIndex;
+  String? marketError;
+  bool marketBusy = false;
+  final Map<String, MarketInstall> marketInstalls = <String, MarketInstall>{};
 
   Activity activity = const Activity(state: 'unknown', label: '正在连接 Magpie…', available: false, activeCount: 0);
   Quota quota = const Quota(ok: false, windows: []);
@@ -88,6 +98,7 @@ class AppController extends ChangeNotifier with wm.WindowListener implements Win
       ..active = settings.active;
     registry = PluginRegistry()..loadInstalled();
     pluginView = registry.resolve(settings);
+    _loadMarketProvenance();
     director.next();
     _activitySignature = '';
     await refreshActivity();
@@ -221,12 +232,9 @@ class AppController extends ChangeNotifier with wm.WindowListener implements Win
         final id = value is String ? value.trim() : '';
         if (id.isNotEmpty && !registry.hasAppearance(id)) return;
         settings = settings.copyWith(
-          plugins: PluginSettings(
-            appearance: id.isEmpty ? null : id,
-            enabled: settings.plugins.enabled,
-            scripts: settings.plugins.scripts,
-            market: settings.plugins.market,
-          ),
+          plugins: id.isEmpty
+              ? settings.plugins.copyWith(clearAppearance: true)
+              : settings.plugins.copyWith(appearance: id),
         );
         pluginsChanged = true;
       case 'pluginEnabled':
@@ -235,12 +243,7 @@ class AppController extends ChangeNotifier with wm.WindowListener implements Win
         final enabled = value['enabled'];
         if (id is! String || enabled is! bool || !registry.hasFestival(id)) return;
         settings = settings.copyWith(
-          plugins: PluginSettings(
-            appearance: settings.plugins.appearance,
-            enabled: {...settings.plugins.enabled, id: enabled},
-            scripts: settings.plugins.scripts,
-            market: settings.plugins.market,
-          ),
+          plugins: settings.plugins.copyWith(enabled: {...settings.plugins.enabled, id: enabled}),
         );
         pluginsChanged = true;
       default:
@@ -444,6 +447,111 @@ class AppController extends ChangeNotifier with wm.WindowListener implements Win
     await launchUrl(Uri.parse(repositoryUrl), mode: LaunchMode.externalApplication);
   }
 
+  /// The marketplace repository doubles as its own storefront page.
+  Future<void> openMarketRepository() async {
+    await launchUrl(
+      Uri.parse('https://github.com/${settings.plugins.market.repo}'),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  void _loadMarketProvenance() {
+    try {
+      final file = AppPaths.marketProvenanceFile;
+      if (!file.existsSync()) return;
+      marketInstalls
+        ..clear()
+        ..addAll(parseMarketProvenance(file.readAsStringSync()));
+    } catch (_) {
+      // A corrupt provenance file only means the market forgets what it owns.
+    }
+  }
+
+  Future<String?> _saveMarketProvenance() async {
+    try {
+      final file = AppPaths.marketProvenanceFile;
+      await file.parent.create(recursive: true);
+      await file.writeAsString(encodeMarketProvenance(marketInstalls), flush: true);
+      return null;
+    } catch (error) {
+      return '无法写入插件来源记录：$error';
+    }
+  }
+
+  /// Re-reads `index.json` from the marketplace repository.
+  Future<void> refreshMarket() async {
+    if (marketBusy) return;
+    marketBusy = true;
+    marketError = null;
+    notifyListeners();
+    final result = await market.refresh(settings.plugins.market);
+    marketBusy = false;
+    if (!result.ok) {
+      marketError = result.error;
+      notifyListeners();
+      return;
+    }
+    marketIndex = result.index;
+    settings = settings.copyWith(
+      plugins: settings.plugins.copyWith(
+        market: settings.plugins.market.copyWith(lastSync: DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    await _store.save(settings);
+    notifyListeners();
+  }
+
+  /// Downloads, verifies and installs one market entry.
+  Future<void> installMarketPlugin(String id) async {
+    if (marketBusy) return;
+    final entry = marketIndex?.find(id);
+    if (entry == null) {
+      _showNotice('市场索引里没有插件 $id，请先刷新市场。');
+      return;
+    }
+    marketBusy = true;
+    notifyListeners();
+    final result = await market.install(
+      settings: settings.plugins.market,
+      entry: entry,
+      directory: AppPaths.pluginsDirectory,
+    );
+    marketBusy = false;
+    final install = result.install;
+    if (install == null) {
+      _showNotice(result.error ?? '安装失败');
+      return;
+    }
+    marketInstalls[id] = install;
+    final provenanceError = await _saveMarketProvenance();
+    registry.reload();
+    pluginView = registry.resolve(settings);
+    notifyListeners();
+    _showNotice(
+      provenanceError ??
+          '已安装 ${entry.displayName} v${entry.version}。本版尚未接入脚本运行时，插件文件不会被加载或执行。',
+    );
+  }
+
+  /// Removes one plugin directory that this app installed from the market.
+  Future<void> uninstallMarketPlugin(String id) async {
+    if (marketBusy) return;
+    marketBusy = true;
+    notifyListeners();
+    final error = await market.uninstall(id: id, directory: AppPaths.pluginsDirectory);
+    marketBusy = false;
+    if (error != null) {
+      _showNotice(error);
+      return;
+    }
+    marketInstalls.remove(id);
+    final provenanceError = await _saveMarketProvenance();
+    registry.reload();
+    pluginView = registry.resolve(settings);
+    notifyListeners();
+    _showNotice(provenanceError ?? '已卸载插件 $id。');
+  }
+
   void _showNotice(String message) {
     notice = message;
     notifyListeners();
@@ -524,6 +632,7 @@ class AppController extends ChangeNotifier with wm.WindowListener implements Win
     _activityTimer?.cancel();
     _quotaTimer?.cancel();
     _uiTimer?.cancel();
+    market.close();
     unawaited(window.dispose());
     super.dispose();
   }

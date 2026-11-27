@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
+import '../core/market.dart';
 import '../core/settings.dart';
 import 'app_paths.dart';
 
@@ -32,6 +35,8 @@ class PluginManifest {
     this.requiresTrust = false,
     this.accent,
     this.festival,
+    this.scriptEntry,
+    this.scriptPermissions = const <String>[],
   });
   final String id;
   final String version;
@@ -42,6 +47,10 @@ class PluginManifest {
   final bool requiresTrust;
   final String? accent;
   final FestivalWindow? festival;
+  /// Module file inside the plugin directory, for `kind == 'script'`.
+  final String? scriptEntry;
+  /// Permissions the module asks for; the manifest is untrusted until verified.
+  final List<String> scriptPermissions;
 }
 
 class PluginEntry {
@@ -82,21 +91,51 @@ bool festivalActive(FestivalWindow window, DateTime now) {
 class PluginRegistry {
   final List<PluginManifest> _manifests = _builtinPlugins();
 
+  /// Re-reads the plugins directory from scratch, so the panel reflects an
+  /// install or an uninstall immediately.
+  void reload() {
+    _manifests
+      ..clear()
+      ..addAll(_builtinPlugins());
+    _issues.clear();
+    loadInstalled();
+  }
+
   void loadInstalled() {
     final directory = AppPaths.pluginsDirectory;
     if (!directory.existsSync()) return;
     for (final child in directory.listSync()) {
       if (child is! Directory) continue;
+      final name = child.uri.pathSegments.where((segment) => segment.isNotEmpty).last;
+      // A half-written install must never look like a usable plugin.
+      if (name.startsWith('.staging-')) continue;
       try {
         final manifest = _manifestFromJson(
           jsonDecode(File('${child.path}${Platform.pathSeparator}plugin.json').readAsStringSync()),
-          source: 'installed',
+          source: 'external',
         );
-        if (manifest != null && !_manifests.any((item) => item.id == manifest.id)) {
+        if (manifest == null) {
+          _issues.add('插件 $name 的清单不是受支持的类型');
+          continue;
+        }
+        // The directory name is the identity the market installs and removes by,
+        // so a manifest that disagrees would be un-installable.
+        if (manifest.id != name) {
+          _issues.add('插件 $name 的清单 id 是 ${manifest.id}，与目录名不一致');
+          continue;
+        }
+        if (manifest.kind == 'script') {
+          final entry = sanitizeMarketPath(manifest.scriptEntry);
+          if (entry == null || !File(p.join(child.path, entry)).existsSync()) {
+            _issues.add('插件 $name 缺少脚本模块，未加载');
+            continue;
+          }
+        }
+        if (!_manifests.any((item) => item.id == manifest.id)) {
           _manifests.add(manifest);
         }
       } catch (error) {
-        _issues.add('插件 ${child.uri.pathSegments.last} 读取失败：$error');
+        _issues.add('插件 $name 读取失败：$error');
       }
     }
   }
@@ -105,6 +144,16 @@ class PluginRegistry {
 
   bool hasAppearance(String id) => _manifests.any((item) => item.id == id && item.kind == 'appearance');
   bool hasFestival(String id) => _manifests.any((item) => item.id == id && item.kind == 'festival');
+
+  /// Version of a plugin that is currently present on disk, if any.
+  String? installedVersion(String id) {
+    for (final manifest in _manifests) {
+      if (manifest.id == id && manifest.source != 'builtin') return manifest.version;
+    }
+    return null;
+  }
+
+  bool hasInstalled(String id) => _manifests.any((item) => item.id == id && item.source != 'builtin');
 
   PluginView resolve(PetSettings settings, {DateTime? now}) {
     final stamp = now ?? DateTime.now();
@@ -124,7 +173,9 @@ class PluginRegistry {
               ? (manifest.id == appearance.id ? '生效中' : '可选用')
               : manifest.kind == 'festival'
                   ? (manifest.id == festival?.id ? '生效中' : '可选用')
-                  : '未接入';
+                  : manifest.kind == 'script'
+                      ? '已安装 · 运行时未接入'
+                      : '未接入';
       entries.add(PluginEntry(manifest: manifest, active: isActive, state: state));
     }
     final accent = festival?.accent ?? appearance.accent ?? '#2f6fe0';
@@ -142,9 +193,10 @@ PluginManifest? _manifestFromJson(Object? value, {required String source}) {
   if (value is! Map) return null;
   final id = value['id']?.toString() ?? '';
   final kind = value['kind']?.toString() ?? '';
-  if (id.isEmpty || !const {'social', 'appearance', 'festival'}.contains(kind)) return null;
+  if (id.isEmpty || !const {'social', 'appearance', 'festival', 'script'}.contains(kind)) return null;
   final appearance = value['appearance'];
   final festival = value['festival'];
+  final script = value['script'];
   return PluginManifest(
     id: id,
     version: value['version']?.toString() ?? '0.0.0',
@@ -155,6 +207,10 @@ PluginManifest? _manifestFromJson(Object? value, {required String source}) {
     requiresTrust: value['requiresTrust'] == true,
     accent: appearance is Map && appearance['accent'] is String ? appearance['accent'] as String : null,
     festival: festival is Map && festival['window'] is Map ? _festivalFromJson(festival['window']) : null,
+    scriptEntry: script is Map && script['entry'] is String ? script['entry'] as String : null,
+    scriptPermissions: script is Map && script['permissions'] is List
+        ? [for (final item in script['permissions'] as List) item.toString()]
+        : const <String>[],
   );
 }
 
