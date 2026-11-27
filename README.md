@@ -14,7 +14,7 @@
 ![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-4C78A8)
 ![Magpie](https://img.shields.io/badge/Magpie-local%20integration-C7475C)
 ![Flutter](https://img.shields.io/badge/Flutter-Dart-4C78A8)
-![Version](https://img.shields.io/badge/version-0.1.8-4C78A8)
+![Version](https://img.shields.io/badge/version-0.1.10-4C78A8)
 ![Code MIT](https://img.shields.io/badge/code-MIT-538476)
 ![Artwork noncommercial](https://img.shields.io/badge/artwork-noncommercial-D19A35)
 
@@ -53,11 +53,11 @@
 
 ### 直接用 App（推荐）
 
-先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.8-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.8-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
+先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.10-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.10-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
 
 **Windows 10+ x64**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.8-Windows-x64.zip` 并解压到任意文件夹。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.10-Windows-x64.zip` 并解压到任意文件夹。
 2. 双击其中的 `BlueDaFeiYu.exe`。压缩包不含安装器，应用可从任意文件夹直接运行。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)。
 
@@ -67,7 +67,7 @@ Windows 版没有代码签名。若 SmartScreen 拦截，请先核对下载来�
 
 **macOS（Apple Silicon）**
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.8-macOS-arm64.zip`。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.10-macOS-arm64.zip`。
 2. 解压后把「蓝色大肥鱼.app」拖进「应用程序」，再从菜单栏打开。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)，请求灯泡和额度会自动接入。
 
