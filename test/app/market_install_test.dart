@@ -80,6 +80,7 @@ http.Client _repo({
             'sha256': sha256Hex(_moduleBytes),
             'manifest': 'plugins/douyin-scroll/plugin.json',
             'wasm': 'plugins/douyin-scroll/plugin.wasm',
+            'labels': {'zh': '刷抖音'},
           },
         ],
       })),

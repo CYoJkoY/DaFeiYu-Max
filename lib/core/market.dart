@@ -131,7 +131,9 @@ MarketParseResult parseMarketIndex(String text) {
   }
   if (decoded is! Map) return const MarketParseResult.failed('市场索引不是 JSON 对象');
   if (decoded['schemaVersion'] != marketSchemaVersion) {
-    return const MarketParseResult.failed('市场索引版本不是 $marketSchemaVersion');
+    return MarketParseResult.failed(
+      '市场索引版本是 ${decoded['schemaVersion']}，本应用只接受 $marketSchemaVersion',
+    );
   }
   final generatedAt = _text(decoded['generatedAt'], 40);
   if (generatedAt == null) return const MarketParseResult.failed('市场索引缺少 generatedAt');
