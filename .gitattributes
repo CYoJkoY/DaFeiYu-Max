@@ -3,3 +3,12 @@
 *.icns binary
 *.ico binary
 *.webm binary
+
+# GitHub 的语言统计（linguist）只展示本项目真正使用的语言：Dart + Zig + TypeScript。
+# 下面三处不是我们写的源语言，删不掉也不该删，所以只在统计里排除：
+#   windows/、macos/  flutter create 生成的最小宿主外壳（C++ / CMake / Swift）
+#   magpie/           Magpie 宿主按原样加载的静态说明页面（HTML / CSS）
+# 排除只影响统计与站点展示，不影响文件本身，构建与打包照旧。
+windows/** linguist-generated linguist-vendored
+macos/** linguist-generated linguist-vendored
+magpie/** linguist-detectable=false linguist-documentation

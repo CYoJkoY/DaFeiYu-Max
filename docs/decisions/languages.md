@@ -50,6 +50,20 @@
 - 插件仓库用 `node scripts/check-languages.ts` 做同一件事：只允许 Zig 与 TypeScript，`validate.yml` 每次跑。
 - 只有在确实需要跨出 Dart 能力边界时，才在 `AGENTS.md` 约定的位置新增 Zig 或 TypeScript，并在同一次改动里补齐 CI 步骤与测试期望。
 
+## GitHub 语言统计
+
+GitHub 的语言条按 linguist 统计，默认会把 `flutter create` 生成的 C++ / CMake / Swift 外壳和 Magpie 的 HTML / CSS 页面也算进去（本仓库曾经显示为 Dart 83.2%、C++ 8.2%、CMake 4.4%、HTML 2.1%、CSS 1%、Swift 0.8%、C 0.3%）。这些文件删不掉：Flutter 桌面端必须由 C++ / Swift 外壳启动引擎，Magpie 页面必须是静态 HTML / CSS。
+
+因此用 `.gitattributes` 把它们排除出统计，语言条只反映项目真正使用的三种语言：
+
+```
+windows/** linguist-generated linguist-vendored
+macos/** linguist-generated linguist-vendored
+magpie/** linguist-detectable=false linguist-documentation
+```
+
+这不会改变仓库内容、构建或打包，只是不让统计把生成物和页面格式当成项目语言。`test/distribution_test.dart` 会检查这三条规则仍在，并确认没有任何第三种语言的文件跑到这三个目录之外。
+
 ## 代价
 
 - 主应用眼下没有 Zig / TypeScript，如果将来要补原生能力，需要同时改 CI 与语言测试，改动面比「随手写个脚本」大。

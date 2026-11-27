@@ -101,6 +101,31 @@ const Set<String> _platformShellExtensions = <String>{
   '.xib',
 };
 
+/// GitHub（linguist）语言统计里允许出现的、不属于三种语言的路径。
+///
+/// 这些目录里的 C++ / CMake / Swift / HTML / CSS 不是本项目写的源语言：
+/// `windows/` 与 `macos/` 是 `flutter create` 生成的宿主外壳，`magpie/` 是
+/// Magpie 宿主按原样加载的静态说明页面。它们删不掉（Flutter 桌面端与 Magpie
+/// 页面都离不开），所以用 `.gitattributes` 的 linguist 规则把它们排除在统计外。
+const Set<String> _statisticsExcludedPrefixes = <String>{
+  'windows/',
+  'macos/',
+  'magpie/',
+};
+
+/// 会被 GitHub 计成语言的扩展名，用来确认没有第四种语言从新路径混进来。
+const Set<String> _reportedExtensions = <String>{
+  '.c',
+  '.h',
+  '.cc',
+  '.cpp',
+  '.cxx',
+  '.cmake',
+  '.swift',
+  '.html',
+  '.css',
+};
+
 /// 平台分支只允许出现在真正需要区分两个桌面的文件里。
 const Set<String> _platformAwareFiles = <String>{
   'lib/app/app_controller.dart',
@@ -155,6 +180,41 @@ void main() {
       unexpected,
       isEmpty,
       reason: '宿主外壳里出现了未知类型的文件：\n${unexpected.join('\n')}',
+    );
+  });
+
+  test('GitHub 语言统计里只出现 Dart / Zig / TypeScript', () {
+    final attributes = File('${root.path}/.gitattributes').readAsStringSync();
+    for (final rule in <String>[
+      'windows/** linguist-generated linguist-vendored',
+      'macos/** linguist-generated linguist-vendored',
+      'magpie/** linguist-detectable=false linguist-documentation',
+    ]) {
+      expect(
+        attributes,
+        contains(rule),
+        reason: '.gitattributes 必须把非三种语言的路径排除出统计：$rule',
+      );
+    }
+
+    final escaped = <String>[];
+    for (final path in tracked) {
+      final name = path.split('/').last;
+      final extension = _extensionOf(path);
+      final reported =
+          name == 'CMakeLists.txt' ||
+          (extension != null && _reportedExtensions.contains(extension));
+      if (!reported) continue;
+      if (_statisticsExcludedPrefixes.any(path.startsWith)) continue;
+      escaped.add(path);
+    }
+    expect(
+      escaped,
+      isEmpty,
+      reason:
+          '这些文件会把第四种语言带进 GitHub 语言统计：'
+          '要么用 Dart 写进 lib/，要么只留在 windows/、macos/、magpie/ 的排除规则下。'
+          '\n${escaped.join('\n')}',
     );
   });
 
