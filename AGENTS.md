@@ -56,3 +56,4 @@ flutter build macos --debug   # 或 --release
 - 插件市场已经接进 Flutter 版：面板会读取同级插件仓库 `DaFeiYu-Max-Plugins` 的 `index.json`，按索引下载清单与模块，校验大小与 SHA-256 后才落盘，并支持卸载。脚本插件**运行时**仍未接入，所以面板文案必须写明「安装与校验可用、插件不会被加载或执行」，不要描述本仓库已经删掉的 Zig / WASM 执行能力。
 - 市场契约（索引字段、校验顺序、来源记录文件）写在 `docs/plugin-market.md`；改索引格式时同步修改 `lib/core/market.dart` 的 `marketSchemaVersion`，不要单方面放宽校验。
 - 插件侧源码（Zig 插件、`sdk/dfy.zig`、TypeScript 工具脚本）维护在同级的 `DaFeiYu-Max-Plugins` 仓库；那是 Zig + TypeScript，本仓库不复制它的源码，也不因此引入新的语言。
+- 两个仓库靠 `index.json` 契约对接：插件仓库的 `scripts/validate.ts` 复刻 `lib/core/market.dart` 的接受规则，那边的 `Validate plugins` 绿灯等价于本应用收下这份索引。加减字段或放宽边界时必须两边一起改，不要只改一边。

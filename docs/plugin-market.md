@@ -51,3 +51,16 @@ Flutter 版的插件市场**只做到数据面**：读取索引、校验、安�
 - `lib/ui/panel_view.dart`：`_marketCard()` 负责展示与按钮；卡片底部的说明必须与上面的边界保持一致。
 
 改索引格式时同步提高 `marketSchemaVersion`，不要单方面放宽校验：旧版应用会直接拒绝新版本索引，这比悄悄接受一份没见过的结构安全。
+
+## 插件仓库一侧
+
+契约的另一半在 [`DaFeiYu-Max-Plugins`](https://github.com/CYoJkoY/DaFeiYu-Max-Plugins)，它不需要知道 Dart，
+只需要守住同一份文档形状：
+
+- `index.json` 由 `scripts/build-index.ts` 从各 `plugins/<id>/plugin.json` 重建，`size` 与 `sha256` 现算现写。
+- `scripts/validate.ts` 复刻本文件这一节的接受规则（体积上限、`schemaVersion`、字段长度、权限取值、
+  `manifest` / `wasm` 必须是 `plugins/<id>/…` 相对路径、索引版本要与清单一致），CI 里再把它和 Zig 重编译结果比对。
+- 仓库的 `README.md` 写明了「Flutter 版只做安装与校验、运行时未接入」，与面板文案保持一致。
+
+所以「发布插件」= 在那边提交一个目录并让 `Validate plugins` 变绿；「本应用能装」= 这边的解析器接受那份
+`index.json`。两边任一放宽都必须同时改，否则会出现「仓库自检通过、应用拒收」。
